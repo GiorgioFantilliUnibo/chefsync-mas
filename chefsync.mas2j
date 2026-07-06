@@ -2,12 +2,14 @@ MAS chefsync {
 
     infrastructure: Centralised
 
-    environment: env.DummyEnv
+    environment: env.KitchenEnv
 
     agents:
-        dummy_chef;
+        head_chef;
+        waiter;
+        station_chef #2;
 
     aslSourcePath:
         "src/main/asl";
-        
+
 }
