@@ -1,0 +1,13 @@
+MAS chefsync {
+
+    infrastructure: Centralised
+
+    environment: env.DummyEnv
+
+    agents:
+        dummy_chef;
+
+    aslSourcePath:
+        "src/main/asl";
+        
+}
