@@ -39,12 +39,12 @@ recipe(romagnola_piadina, [heat_piadina, add_squacquerone, add_prosciutto]).
     ?cnp_counter(Id);
     -+cnp_counter(Id + 1);
     
-    .print("Requesting bids for task '", Task, "' (CNP ", Id, ")");
-    .broadcast(tell, cfp(Id, Task));
+    .df_search("station_chef", Chefs);
+    .print("CFP: Requesting bids for task '", Task, "' from ", Chefs, " (CNP ", Id, ")");
+    .send(Chefs, tell, cfp(Id, Task));
     
     .wait(2000);
     !evaluate_bids(Id, Task);
-    
     !delegate_tasks(Rest).
 
 

@@ -12,6 +12,7 @@ workload(0).
 
 +!report_duty <-
     .my_name(Name);
+    .df_register("station_chef");
     .print("Ready at station: ", Name).
 
 
