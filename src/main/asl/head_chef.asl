@@ -6,6 +6,10 @@ order_counter(0).
 // Recipe Ontology: recipe(DishName, [ListOfAtomicTasks])
 recipe(smash_burger, [grill_patty, toast_bun, assemble_burger]).
 recipe(romagnola_piadina, [heat_piadina, add_squacquerone, add_prosciutto]).
+recipe(caprese_salad, [slice_tomatoes, slice_mozzarella, plate_salad]).
+recipe(fried_calamari, [bread_calamari, fry_calamari, plate_calamari]).
+recipe(tiramisu, [prepare_coffee, layer_mascarpone, dust_cocoa]).
+recipe(spaghetti_carbonara, [boil_pasta, fry_guanciale, mix_egg_cheese]).
 
 
 /* Initial goals */
@@ -63,7 +67,7 @@ recipe(romagnola_piadina, [heat_piadina, add_squacquerone, add_prosciutto]).
     .print("CNP ", AuctionId, " launched for task '", Task, "' (Order ", OrderId, ") targeting chefs: ", Chefs);
     
     .send(Chefs, tell, cfp(AuctionId, OrderId, Task));
-    .wait(2000);
+    .wait(1500);
     !evaluate_bids(AuctionId, OrderId, Task).
 
 // --- Bid Evaluation ---
@@ -75,10 +79,16 @@ recipe(romagnola_piadina, [heat_piadina, add_squacquerone, add_prosciutto]).
         .min(Offers, offer(BestBid, Winner));
         .print("Awarding task '", Task, "' (Order ", OrderId, ") to ", Winner, " (Bid: ", BestBid, ")");
         .send(Winner, tell, accept_proposal(AuctionId, OrderId, Task));
+        
+        .abolish(propose(_, _, _)[source(Winner)]);
+        
+        .findall(Loser, .member(offer(_, Loser), Offers) & Loser \== Winner, Losers);
+        .send(Losers, tell, reject_proposal(AuctionId, OrderId, Task));
+        
         .abolish(propose(AuctionId, OrderId, _));
     } else {
         .print("No bids received for task ", Task, " (Order ", OrderId, ")! Retrying auction in 1s...");
-        .wait(1000);
+        .wait(600);
         !!start_asynchronous_auction(OrderId, Task);
     }.
 
