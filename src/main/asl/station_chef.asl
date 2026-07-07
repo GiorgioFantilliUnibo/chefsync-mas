@@ -20,6 +20,7 @@ task_workstation(add_prosciutto, prep_counter).
 
 +!report_duty <-
     .my_name(Name);
+    register;
     .df_register("station_chef");
     .print("Ready at station: ", Name).
 
@@ -29,8 +30,13 @@ task_workstation(add_prosciutto, prep_counter).
 +cfp(Id, Task)[source(head_chef)] <-
     ?workload(W);
     .my_name(Name);
-    .print("[", Name, "] Evaluating CFP ", Id, " for task: ", Task, ". My workload is ", W);
-    .send(head_chef, tell, propose(Id, W)).
+    ?at(Name, MyX, MyY);
+    ?task_workstation(Task, Station);
+    ?workstation(Station, StatX, StatY);
+    Distance = math.abs(MyX - StatX) + math.abs(MyY - StatY);
+    Bid = Distance + (W * 5);
+    .print("[", Name, "] Evaluating CFP ", Id, " for task: ", Task, ". Dist: ", Distance, ", WL: ", W, " -> Bid: ", Bid);
+    .send(head_chef, tell, propose(Id, Bid)).
 
 +accept_proposal(Id, Task)[source(head_chef)] <-
     .my_name(Name);

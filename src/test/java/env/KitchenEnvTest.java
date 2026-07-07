@@ -1,5 +1,6 @@
 package env;
 
+import java.util.Collection;
 import jason.asSyntax.Literal;
 import jason.asSyntax.Structure;
 import org.junit.Before;
@@ -19,11 +20,23 @@ public class KitchenEnvTest {
 
     @Test
     public void testInitAddsKitchenStatusPercept() {
-        boolean hasPercept = env.containsPercept(KitchenEnv.kso);
-        assertTrue("Environment should contain kitchen_status(open) percept after initialization", hasPercept);
+        Collection<Literal> percepts = env.getPercepts("head_chef");
+        assertNotNull("getPercepts should not return null", percepts);
+        assertTrue("Should contain kitchen_status(open)",
+                percepts.stream().anyMatch(p -> p.equals(KitchenEnv.kso)));
+        assertTrue("Should contain grill workstation",
+                percepts.stream().anyMatch(p -> p.equals(KitchenEnv.wsGrill)));
+    }
+
+    @Test
+    public void testUpdatePerceptsAddsAgentLocation() {
+        Structure registerAction = (Structure) Literal.parseLiteral("register");
+        env.executeAction("station_chef1", registerAction);
         
-        boolean hasGrill = env.containsPercept(KitchenEnv.wsGrill);
-        assertTrue("Environment should contain grill workstation", hasGrill);
+        Collection<Literal> percepts = env.getPercepts("station_chef1");
+        Literal expected = Literal.parseLiteral("at(station_chef1, 0, 0)");
+        assertTrue("getPercepts should include 'at' percept after registration",
+                percepts != null && percepts.stream().anyMatch(p -> p.equals(expected)));
     }
 
     @Test

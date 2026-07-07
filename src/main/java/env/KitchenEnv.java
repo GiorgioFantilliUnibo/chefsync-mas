@@ -3,12 +3,22 @@ package env;
 import jason.asSyntax.Literal;
 import jason.asSyntax.Structure;
 import jason.environment.Environment;
-import java.util.HashMap;
+import jason.environment.grid.Location;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 import model.KitchenModel;
 import model.Role;
 
+/**
+ * Jason Environment class representing the bridge between the BDI agents
+ * and the physical model {@link KitchenModel}. Handles action mapping, permissions,
+ * and perception delivery.
+ */
 public class KitchenEnv extends Environment {
 
     // action literals
@@ -24,30 +34,43 @@ public class KitchenEnv extends Environment {
     public static final Literal wsOven = Literal.parseLiteral("workstation(oven, 3, 3)");
     public static final Literal wsPrep = Literal.parseLiteral("workstation(prep_counter, 4, 2)");
 
-    
+
     private Logger logger = Logger.getLogger("chefsync.mas2j." + KitchenEnv.class.getName());
 
     private KitchenModel model;
 
-    private Map<String, Integer> agentIds = new HashMap<>();
-    private int nextAgId = 0;
+    private Map<String, Integer> agentIds = new ConcurrentHashMap<>();
+    private AtomicInteger nextAgId = new AtomicInteger(0);
 
 
     @Override
     public void init(String[] args) {
         logger.info("Kitchen Environment initialized. Setting up workstations...");
-        this.clearPercepts();
 
         this.model = new KitchenModel();
 
         agentIds.clear();
-        nextAgId = 0;
+        nextAgId.set(0);
+    }
 
-        this.addPercept(KitchenEnv.kso);
+    @Override
+    public Collection<Literal> getPercepts(String agName) {
+        List<Literal> percepts = new ArrayList<>();
 
-        this.addPercept(KitchenEnv.wsGrill);
-        this.addPercept(KitchenEnv.wsOven);
-        this.addPercept(KitchenEnv.wsPrep);
+        percepts.add(kso);
+        percepts.add(wsGrill);
+        percepts.add(wsOven);
+        percepts.add(wsPrep);
+
+        Integer agId = agentIds.get(agName);
+        if (agId != null) {
+            Location loc = model.getAgPos(agId);
+            if (loc != null) {
+                percepts.add(Literal.parseLiteral("at(" + agName + ", " + loc.x + ", " + loc.y + ")"));
+            }
+        }
+
+        return percepts;
     }
 
     @Override
@@ -61,6 +84,12 @@ public class KitchenEnv extends Environment {
             return true;
         }
         String functor = action.getFunctor();
+
+        // Action: register
+        if (functor.equals("register")) {
+            getOrAllocateAgentId(agName);
+            return true;
+        }
 
         // Action: lock(Workstation)
         if (functor.equals(ACT_LOCK)) {
@@ -117,7 +146,7 @@ public class KitchenEnv extends Environment {
 
 
     private int getOrAllocateAgentId(String agName) {
-        return agentIds.computeIfAbsent(agName, k -> nextAgId++);
+        return agentIds.computeIfAbsent(agName, k -> nextAgId.getAndIncrement());
     }
 
     private boolean checkPermission(String agName, Role requiredRole, String actionDesc) {
