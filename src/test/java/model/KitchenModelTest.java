@@ -40,6 +40,7 @@ public class KitchenModelTest {
     @Test
     public void testMoveTowards() {
         int agId = 0;
+        model.addAgent(agId, "station_chef1", 0, 0);
         Location initialPos = model.getAgPos(agId);
         
         Location dest = new Location(initialPos.x + 2, initialPos.y + 1);

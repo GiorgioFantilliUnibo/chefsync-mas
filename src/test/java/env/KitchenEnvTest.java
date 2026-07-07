@@ -64,13 +64,16 @@ public class KitchenEnvTest {
 
     @Test
     public void testExecuteActionMoveTowards() {
-        Structure moveAction = (Structure) Literal.parseLiteral(KitchenEnv.ACT_MOVE + "(1, 1)");
+        Structure registerAction = (Structure) Literal.parseLiteral("register");
+        env.executeAction("station_chef1", registerAction);
+        
+        Structure moveAction = (Structure) Literal.parseLiteral(KitchenEnv.ACT_STEP + "(1, 1)");
         
         assertFalse("Waiter should not be able to move towards", env.executeAction("waiter", moveAction));
-        assertTrue("Action 'move_towards' should return true", env.executeAction("station_chef1", moveAction));
+        assertTrue("Action 'step_towards' should return true", env.executeAction("station_chef1", moveAction));
         
-        Structure invalidMove = (Structure) Literal.parseLiteral(KitchenEnv.ACT_MOVE + "(invalid, 1)");
-        assertFalse("Action 'move_towards' with invalid coords should return false", env.executeAction("station_chef1", invalidMove));
+        Structure invalidMove = (Structure) Literal.parseLiteral(KitchenEnv.ACT_STEP + "(invalid, 1)");
+        assertFalse("Action 'step_towards' with invalid coords should return false", env.executeAction("station_chef1", invalidMove));
     }
 
     @Test
