@@ -1,6 +1,7 @@
 package model;
 
 import jason.environment.grid.Location;
+import java.util.Collection;
 import view.KitchenView;
 
 /**
@@ -9,8 +10,24 @@ import view.KitchenView;
  */
 public interface KitchenModel {
 
-    /** The size of the grid environment. */
-    int GSize = 7;
+    /**
+     * Registers a new workstation in the kitchen model and the underlying grid.
+     * @param ws the workstation to add.
+     */
+    void addWorkstation(Workstation ws);
+
+    /**
+     * @return all workstations present in the kitchen.
+     */
+    Collection<Workstation> getWorkstations();
+
+    /**
+     * Retrieves the workstation at a specific grid location.
+     * @param x the X coordinate.
+     * @param y the Y coordinate.
+     * @return the Workstation, or null if none is present at the location.
+     */
+    Workstation getWorkstationAt(int x, int y);
 
     /**
      * Attempts to acquire an exclusive lock on a workstation.

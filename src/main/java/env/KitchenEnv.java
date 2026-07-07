@@ -12,6 +12,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 import model.*;
+import view.*;
 
 /**
  * Jason Environment class representing the bridge between the BDI agents
@@ -29,11 +30,9 @@ public class KitchenEnv extends Environment {
 
     // belief literals
     public static final Literal kso = Literal.parseLiteral("kitchen_status(open)");
-    public static final Literal wsGrill = Literal.parseLiteral("workstation(grill, 1, 1)");
-    public static final Literal wsOven = Literal.parseLiteral("workstation(oven, 3, 3)");
-    public static final Literal wsPrep = Literal.parseLiteral("workstation(prep_counter, 4, 2)");
-
-
+    public static final String BEL_WORKSTATION = "workstation";
+    
+    
     private Logger logger = Logger.getLogger("chefsync.mas2j." + KitchenEnv.class.getName());
 
     private KitchenModel model;
@@ -46,7 +45,11 @@ public class KitchenEnv extends Environment {
     public void init(String[] args) {
         logger.info("Kitchen Environment initialized. Setting up workstations...");
 
-        this.model = new KitchenModelImpl();
+        KitchenModelImpl impl = new KitchenModelImpl();
+        this.model = impl;
+        KitchenView view = new KitchenViewImpl(impl);
+
+        this.model.setView(view);
 
         agentIds.clear();
         nextAgId.set(0);
@@ -57,9 +60,10 @@ public class KitchenEnv extends Environment {
         List<Literal> percepts = new ArrayList<>();
 
         percepts.add(kso);
-        percepts.add(wsGrill);
-        percepts.add(wsOven);
-        percepts.add(wsPrep);
+        
+        for (Workstation ws : model.getWorkstations()) {
+            percepts.add(Literal.parseLiteral(BEL_WORKSTATION + "(" + ws.getName() + ", " + ws.getX() + ", " + ws.getY() + ")"));
+        }
 
         Integer agId = agentIds.get(agName);
         if (agId != null) {

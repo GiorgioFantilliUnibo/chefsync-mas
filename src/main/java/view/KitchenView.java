@@ -6,10 +6,7 @@ package view;
 public interface KitchenView {
 
     /**
-     * Notifies the view that a cell in the grid needs rendering update.
-     *
-     * @param x the X coordinate of the cell
-     * @param y the Y coordinate of the cell
+     * Notifies the view that the model has changed and needs a rendering update.
      */
-    void update(int x, int y);
+    void updateView();
 }

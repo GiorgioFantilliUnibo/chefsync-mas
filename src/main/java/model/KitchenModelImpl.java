@@ -2,6 +2,7 @@ package model;
 
 import jason.environment.grid.GridWorldModel;
 import jason.environment.grid.Location;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import view.KitchenView;
@@ -11,9 +12,9 @@ import view.KitchenView;
  */
 public class KitchenModelImpl extends GridWorldModel implements KitchenModel {
 
-    public static final int GSize = 7;
-    
-    private Map<String, String> workstationLocks = new HashMap<>();
+    public static final int GSize = 12;
+
+    private Map<String, Workstation> stations = new HashMap<>();
     private KitchenView customView;
 
     public KitchenModelImpl() {
@@ -22,15 +23,37 @@ public class KitchenModelImpl extends GridWorldModel implements KitchenModel {
         this.setAgPos(0, 0, 0);
         this.setAgPos(1, 0, 1);
         
-        workstationLocks.put("grill", null);
-        workstationLocks.put("oven", null);
-        workstationLocks.put("prep_counter", null);
+        addWorkstation(new WorkstationImpl("grill", 2, 3));
+        addWorkstation(new WorkstationImpl("oven", 9, 4));
+        addWorkstation(new WorkstationImpl("prep_counter", 5, 9));
+    }
+
+    @Override
+    public void addWorkstation(Workstation ws) {
+        stations.put(ws.getName(), ws);
+        this.add(GridWorldModel.OBSTACLE, ws.getX(), ws.getY());
+    }
+
+    @Override
+    public Collection<Workstation> getWorkstations() {
+        return stations.values();
+    }
+
+    @Override
+    public Workstation getWorkstationAt(int x, int y) {
+        for (Workstation ws : stations.values()) {
+            if (ws.getX() == x && ws.getY() == y) {
+                return ws;
+            }
+        }
+        return null;
     }
 
     @Override
     public boolean lock(String station, String agName) {
-        if (workstationLocks.containsKey(station) && workstationLocks.get(station) == null) {
-            workstationLocks.put(station, agName);
+        Workstation ws = stations.get(station);
+        if (ws != null && ws.lock(agName)) {
+            if (customView != null) customView.updateView();
             return true;
         }
         return false;
@@ -38,8 +61,9 @@ public class KitchenModelImpl extends GridWorldModel implements KitchenModel {
 
     @Override
     public boolean unlock(String station, String agName) {
-        if (agName.equals(workstationLocks.get(station))) {
-            workstationLocks.put(station, null);
+        Workstation ws = stations.get(station);
+        if (ws != null && ws.unlock(agName)) {
+            if (customView != null) customView.updateView();
             return true;
         }
         return false;
@@ -57,7 +81,7 @@ public class KitchenModelImpl extends GridWorldModel implements KitchenModel {
         this.setAgPos(agId, r1);
         
         if (customView != null) {
-            customView.update(r1.x, r1.y);
+            customView.updateView();
         }
         
         return true;
@@ -65,7 +89,8 @@ public class KitchenModelImpl extends GridWorldModel implements KitchenModel {
 
     @Override
     public String getLockOwner(String station) {
-        return workstationLocks.get(station);
+        Workstation ws = stations.get(station);
+        return ws != null ? ws.getLockOwner() : null;
     }
 
     @Override
