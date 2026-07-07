@@ -25,9 +25,12 @@ task_workstation(add_prosciutto, prep_counter).
     .print("Ready at station: ", Name).
 
 
-/* ContractNet Protocol - Participant Logic */
+/* ContractNet Protocol */
 
-+cfp(Id, Task)[source(head_chef)] <-
+// --- Bidding Phase ---
+// Computes bid based on spatial distance and current workload
+
++cfp(AuctionId, OrderId, Task)[source(head_chef)] <-
     ?workload(W);
     .my_name(Name);
     ?at(Name, MyX, MyY);
@@ -35,46 +38,47 @@ task_workstation(add_prosciutto, prep_counter).
     ?workstation(Station, StatX, StatY);
     Distance = math.abs(MyX - StatX) + math.abs(MyY - StatY);
     Bid = Distance + (W * 5);
-    .print("Evaluating CFP ", Id, " for task: ", Task, ". Dist: ", Distance, ", WL: ", W, " -> Bid: ", Bid);
-    .send(head_chef, tell, propose(Id, Bid)).
+    .print("Evaluating CFP ", AuctionId, " for task: ", Task, " (Order ", OrderId, "). Bid: ", Bid);
+    .send(head_chef, tell, propose(AuctionId, OrderId, Bid)).
 
-+accept_proposal(Id, Task)[source(head_chef)] <-
-    .print("won contract ", Id, "! Executing task: ", Task, "...");
-    
+// --- Task Execution Pipeline ---
+// Manages the sequential process of moving to, locking, and using a workstation
+
++accept_proposal(AuctionId, OrderId, Task)[source(head_chef)] <-
+    .print("Won contract ", AuctionId, " for Order ", OrderId, "! Executing: ", Task);
     ?workload(W);
     -+workload(W + 1);
     
-    !perform_task(Task, 0);
-    .print("completed task: ", Task);
-
+    !perform_task(AuctionId, OrderId, Task, 0);
+    
     ?workload(CurrentW);
     -+workload(CurrentW - 1).
 
 
-+!perform_task(Task, Attempts) 
++!perform_task(AuctionId, OrderId, Task, Attempts) 
     : task_workstation(Task, Station) & workstation(Station, X, Y) 
-    <-  .print("moving to ", Station, " at (", X, ", ", Y, ")");
+    <-  .print("Moving to ", Station, " at (", X, ", ", Y, ")");
         move_towards(X, Y);
         
-        .print("locking ", Station);
+        .print("Locking ", Station);
         lock(Station); 
         
-        .print("executing ", Task, " on ", Station, "...");
+        .print("Executing ", Task, " on ", Station, "...");
         .wait(1500);
         
-        .print("unlocking ", Station);
+        .print("Unlocking ", Station);
         unlock(Station);
-        .print("completed task: ", Task).
+        
+        .send(head_chef, tell, task_completed(OrderId, Task)).
 
--!perform_task(Task, Attempts) : Attempts < 3 <-
-    .print("Lock failed for ", Task, ". Retrying in a bit... (Attempt ", Attempts + 1, ")");
+// --- Fallback & Error Handling ---
+// BDI failure recovery: retries on lock failures before giving up completely
+
+-!perform_task(AuctionId, OrderId, Task, Attempts) : Attempts < 3 <-
+    .print("Lock failed for ", Task, " (Order ", OrderId, "). Retrying in 2s... (Attempt ", Attempts + 1, ")");
     .wait(2000);
-    !perform_task(Task, Attempts + 1).
+    !perform_task(AuctionId, OrderId, Task, Attempts + 1).
 
--!perform_task(Task, Attempts) : Attempts >= 3 <-
-    .print("Unable to complete ", Task, ". Station inaccessible. Notifying the Head Chef.");
-    
-    ?workload(CurrentW);
-    -+workload(CurrentW - 1);
-    
-    .send(head_chef, tell, task_failed(Task)).
+-!perform_task(AuctionId, OrderId, Task, Attempts) : Attempts >= 3 <-
+    .print("Max lock attempts reached for ", Task, " (Order ", OrderId, "). Aborting.");
+    .send(head_chef, tell, task_failed(OrderId, Task)).
