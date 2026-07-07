@@ -2,6 +2,14 @@
 
 workload(0).
 
+// Task to workstation mappings
+task_workstation(grill_patty, grill).
+task_workstation(toast_bun, grill).
+task_workstation(assemble_burger, prep_counter).
+task_workstation(heat_piadina, oven).
+task_workstation(add_squacquerone, prep_counter).
+task_workstation(add_prosciutto, prep_counter).
+
 
 /* Initial goals */
 
@@ -31,17 +39,32 @@ workload(0).
     ?workload(W);
     -+workload(W + 1);
     
-    .wait(1500);
+    !perform_task(Task);
     .print("[", Name, "] completed task: ", Task);
 
     ?workload(CurrentW);
     -+workload(CurrentW - 1).
 
 
-+!perform_task(Task)[source(head_chef)] <-
++!perform_task(Task)[source(head_chef)] 
+    : task_workstation(Task, Station) & workstation(Station, X, Y) 
+    <-  .my_name(Name);
+        .print("[", Name, "] received task: ", Task, " -> Starting preparation on ", Station, "...");
+        
+        .print("[", Name, "] moving to ", Station, " at (", X, ", ", Y, ")");
+        move_towards(X, Y);
+        
+        .print("[", Name, "] locking ", Station);
+        lock(Station);
+        
+        .print("[", Name, "] executing ", Task, " on ", Station, "...");
+        .wait(1500);
+        
+        .print("[", Name, "] unlocking ", Station);
+        unlock(Station);
+        
+        .print("[", Name, "] completed task: ", Task).
+
++!perform_task(Task) <-
     .my_name(Name);
-    .print("[", Name, "] received task: ", Task, " -> Starting preparation...");
-    
-    // TODO: Spatial reasoning (move to workstation, lock resource, execute)
-    
-    .print("[", Name, "] completed task: ", Task).
+    .print("[", Name, "] Error: unable to perform task: ", Task).

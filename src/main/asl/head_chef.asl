@@ -1,6 +1,5 @@
 /* Initial beliefs and rules */
 
-available_workstations(3).
 cnp_counter(0).
 
 // Recipe Ontology: recipe(DishName, [ListOfAtomicTasks])
