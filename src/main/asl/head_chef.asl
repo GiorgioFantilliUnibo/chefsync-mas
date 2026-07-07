@@ -22,7 +22,7 @@ recipe(romagnola_piadina, [heat_piadina, add_squacquerone, add_prosciutto]).
 +!prepare_order(Dish, Table)[source(waiter)] : recipe(Dish, Tasks) <-
     .print("Order accepted: ", Dish, " (Table ", Table, ").");
     .print("Decomposing into tasks: ", Tasks);
-    !delegate_tasks(Tasks).
+    !delegate_tasks(Dish, Tasks).
 
 +!prepare_order(Dish, Table)[source(waiter)] <-
     .print("Error! Unknown recipe for dish: ", Dish).
@@ -30,11 +30,11 @@ recipe(romagnola_piadina, [heat_piadina, add_squacquerone, add_prosciutto]).
 
 /* ContractNet Protocol - Initiator Logic */
 
-+!delegate_tasks([]) <-
-    .print("All sub-tasks requested! Dish assembly completed.");
++!delegate_tasks(Dish, []) <-
+    .print("ORDER COMPLETE: '", Dish, "' is ready for service!");
     ring_bell.
 
-+!delegate_tasks([Task | Rest]) <-
++!delegate_tasks(Dish, [Task | Rest]) <-
     ?cnp_counter(Id);
     -+cnp_counter(Id + 1);
     
@@ -44,7 +44,7 @@ recipe(romagnola_piadina, [heat_piadina, add_squacquerone, add_prosciutto]).
     
     .wait(2000);
     !evaluate_bids(Id, Task);
-    !delegate_tasks(Rest).
+    !delegate_tasks(Dish, Rest).
 
 
 +!evaluate_bids(Id, Task) <-
@@ -62,3 +62,8 @@ recipe(romagnola_piadina, [heat_piadina, add_squacquerone, add_prosciutto]).
     } else {
         .print("No bids received for task ", Task, "! Brigade is unresponsive.");
     }.
+
+
++task_failed(Task)[source(Chef)] <-
+    .print("ATTENTION: The chef ", Chef, " failed the task '", Task, "'. Re-launching CNP.");
+    !!delegate_tasks(recovery, [Task]).
