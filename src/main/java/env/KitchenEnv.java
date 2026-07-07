@@ -11,8 +11,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
-import model.KitchenModel;
-import model.Role;
+import model.*;
 
 /**
  * Jason Environment class representing the bridge between the BDI agents
@@ -47,7 +46,7 @@ public class KitchenEnv extends Environment {
     public void init(String[] args) {
         logger.info("Kitchen Environment initialized. Setting up workstations...");
 
-        this.model = new KitchenModel();
+        this.model = new KitchenModelImpl();
 
         agentIds.clear();
         nextAgId.set(0);

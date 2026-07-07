@@ -1,36 +1,16 @@
 package model;
 
-import jason.environment.grid.GridWorldModel;
 import jason.environment.grid.Location;
-
-import java.util.HashMap;
-import java.util.Map;
+import view.KitchenView;
 
 /**
- * The spatial model of the kitchen grid environment.
- * Manages workstations, positional tracking, and lock mutual exclusions.
+ * The spatial model interface of the kitchen grid environment.
+ * Exposes methods for workstations, positional tracking, lock mutual exclusions, and view notification.
  */
-public class KitchenModel extends GridWorldModel {
+public interface KitchenModel {
 
-    public static final int GSize = 7;
-    
-    private Map<String, String> workstationLocks = new HashMap<>();
-
-
-    /**
-     * Initializes a {@value #GSize}x{@value #GSize} grid world with two starting mobile agent positions
-     * and sets up the default workstation layout.
-     */
-    public KitchenModel() {
-        super(GSize, GSize, 2);
-        
-        this.setAgPos(0, 0, 0);
-        this.setAgPos(1, 0, 1);
-        
-        workstationLocks.put("grill", null);
-        workstationLocks.put("oven", null);
-        workstationLocks.put("prep_counter", null);
-    }
+    /** The size of the grid environment. */
+    int GSize = 7;
 
     /**
      * Attempts to acquire an exclusive lock on a workstation.
@@ -39,13 +19,7 @@ public class KitchenModel extends GridWorldModel {
      * @param agName  the name of the agent requesting the lock
      * @return true if the lock was successfully acquired, false otherwise
      */
-    public boolean lock(String station, String agName) {
-        if (workstationLocks.containsKey(station) && workstationLocks.get(station) == null) {
-            workstationLocks.put(station, agName);
-            return true;
-        }
-        return false;
-    }
+    boolean lock(String station, String agName);
 
     /**
      * Attempts to release an exclusive lock on a workstation.
@@ -54,13 +28,7 @@ public class KitchenModel extends GridWorldModel {
      * @param agName  the name of the agent releasing the lock
      * @return true if the lock was successfully released, false otherwise
      */
-    public boolean unlock(String station, String agName) {
-        if (agName.equals(workstationLocks.get(station))) {
-            workstationLocks.put(station, null);
-            return true;
-        }
-        return false;
-    }
+    boolean unlock(String station, String agName);
 
     /**
      * Moves an agent one step towards a target destination.
@@ -70,30 +38,28 @@ public class KitchenModel extends GridWorldModel {
      * @param destY the target Y coordinate
      * @return true when movement completes
      */
-    public boolean moveTowards(int agId, int destX, int destY) {
-        Location r1 = this.getAgPos(agId);
-        if (r1.x < destX) r1.x++;
-        else if (r1.x > destX) r1.x--;
+    boolean moveTowards(int agId, int destX, int destY);
 
-        if (r1.y < destY) r1.y++;
-        else if (r1.y > destY) r1.y--;
-
-        this.setAgPos(agId, r1);
-        
-        if (this.view != null) {
-            this.view.update(r1.x, r1.y);
-        }
-        
-        return true;
-    }
-    
     /**
      * Retrieves the name of the agent currently holding a workstation's lock.
      *
      * @param station the name of the target workstation
      * @return the name of the agent holding the lock, or null if unlocked
      */
-    public String getLockOwner(String station) {
-        return workstationLocks.get(station);
-    }
+    String getLockOwner(String station);
+
+    /**
+     * Gets the current location of the agent inside the grid.
+     *
+     * @param agId the internal model ID of the agent
+     * @return the Location object representing (X, Y) coordinates
+     */
+    Location getAgPos(int agId);
+
+    /**
+     * Sets the decoupling view for UI notifications.
+     *
+     * @param view the concrete implementation of the KitchenView interface
+     */
+    void setView(KitchenView view);
 }

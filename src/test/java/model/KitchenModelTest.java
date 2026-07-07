@@ -11,7 +11,7 @@ public class KitchenModelTest {
     
     @Before
     public void setUp() {
-        model = new KitchenModel();
+        model = new KitchenModelImpl();
     }
     
     @Test
