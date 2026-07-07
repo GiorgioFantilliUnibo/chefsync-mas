@@ -7,7 +7,7 @@ MAS chefsync {
     agents:
         head_chef;
         waiter;
-        station_chef #2;
+        station_chef #3;
 
     aslSourcePath:
         "src/main/asl";

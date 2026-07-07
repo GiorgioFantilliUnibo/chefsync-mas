@@ -13,7 +13,7 @@ import view.KitchenView;
  */
 public class KitchenModelImpl extends GridWorldModel implements KitchenModel {
 
-    public static final int GSize = 12;
+    public static final int GSize = 16;
 
     private Map<String, Workstation> stations = new HashMap<>();
     private KitchenView customView;
@@ -25,7 +25,11 @@ public class KitchenModelImpl extends GridWorldModel implements KitchenModel {
         
         addWorkstation(new WorkstationImpl("grill", 2, 3));
         addWorkstation(new WorkstationImpl("oven", 9, 4));
-        addWorkstation(new WorkstationImpl("prep_counter", 5, 9));
+        addWorkstation(new WorkstationImpl("prep_counter", 5, 9));        
+        addWorkstation(new WorkstationImpl("fryer", 14, 2));
+        addWorkstation(new WorkstationImpl("salad_bar", 1, 14));
+        addWorkstation(new WorkstationImpl("stove", 15, 12));
+        addWorkstation(new WorkstationImpl("dessert_station", 12, 15));
     }
 
     @Override
