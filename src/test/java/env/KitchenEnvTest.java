@@ -24,8 +24,10 @@ public class KitchenEnvTest {
         assertNotNull("getPercepts should not return null", percepts);
         assertTrue("Should contain kitchen_status(open)",
                 percepts.stream().anyMatch(p -> p.equals(KitchenEnv.kso)));
-        assertTrue("Should contain grill workstation",
-                percepts.stream().anyMatch(p -> p.equals(KitchenEnv.wsGrill)));
+        
+        Literal expectedGrill = Literal.parseLiteral(KitchenEnv.BEL_WORKSTATION + "(grill, 2, 3)");
+        assertTrue("Should contain dynamic grill workstation percept",
+                percepts.stream().anyMatch(p -> p.equals(expectedGrill)));
     }
 
     @Test

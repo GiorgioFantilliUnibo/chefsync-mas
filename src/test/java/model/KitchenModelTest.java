@@ -15,6 +15,18 @@ public class KitchenModelTest {
     }
     
     @Test
+    public void testAddWorkstation() {
+        Workstation newWs = new WorkstationImpl("test_station", 10, 10);
+        model.addWorkstation(newWs);
+        
+        assertNotNull("Workstation should be retrievable by coordinates", model.getWorkstationAt(10, 10));
+        assertEquals("test_station", model.getWorkstationAt(10, 10).getName());
+        
+        boolean found = model.getWorkstations().stream().anyMatch(ws -> ws.getName().equals("test_station"));
+        assertTrue("Workstation should be present in the collection", found);
+    }
+    
+    @Test
     public void testLockUnlock() {
         assertTrue("Agent should be able to lock a free station", model.lock("grill", "chef1"));
         assertFalse("Agent should not be able to lock an occupied station", model.lock("grill", "chef2"));
