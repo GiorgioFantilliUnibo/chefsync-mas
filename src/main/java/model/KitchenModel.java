@@ -17,6 +17,20 @@ public interface KitchenModel {
     void addWorkstation(Workstation ws);
 
     /**
+     * Dynamically registers an agent into the physical grid model.
+     * @param agId the internal model ID of the agent
+     * @param name the agent's name
+     * @param x the starting X coordinate
+     * @param y the starting Y coordinate
+     */
+    void addAgent(int agId, String name, int x, int y);
+
+    /**
+     * Gets the name of the agent by its ID.
+     */
+    String getAgentName(int agId);
+
+    /**
      * @return all workstations present in the kitchen.
      */
     Collection<Workstation> getWorkstations();
@@ -46,6 +60,12 @@ public interface KitchenModel {
      * @return true if the lock was successfully released, false otherwise
      */
     boolean unlock(String station, String agName);
+
+    /** Gets the frames per second for agent movement */
+    int getFPS();
+    
+    /** Sets the frames per second for agent movement */
+    void setFPS(int fps);
 
     /**
      * Moves an agent one step towards a target destination.

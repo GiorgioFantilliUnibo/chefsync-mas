@@ -5,6 +5,7 @@ import jason.environment.grid.Location;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import view.KitchenView;
 
 /**
@@ -16,12 +17,11 @@ public class KitchenModelImpl extends GridWorldModel implements KitchenModel {
 
     private Map<String, Workstation> stations = new HashMap<>();
     private KitchenView customView;
+    private Map<Integer, String> agentNames = new ConcurrentHashMap<>();
+    private int fps = 2;
 
     public KitchenModelImpl() {
-        super(GSize, GSize, 2);
-        
-        this.setAgPos(0, 0, 0);
-        this.setAgPos(1, 0, 1);
+        super(GSize, GSize, 10);
         
         addWorkstation(new WorkstationImpl("grill", 2, 3));
         addWorkstation(new WorkstationImpl("oven", 9, 4));
@@ -37,6 +37,17 @@ public class KitchenModelImpl extends GridWorldModel implements KitchenModel {
     @Override
     public Collection<Workstation> getWorkstations() {
         return stations.values();
+    }
+
+    @Override
+    public void addAgent(int agId, String name, int x, int y) {
+        agentNames.put(agId, name);
+        this.setAgPos(agId, x, y);
+    }
+
+    @Override
+    public String getAgentName(int agId) {
+        return agentNames.get(agId);
     }
 
     @Override
@@ -96,5 +107,15 @@ public class KitchenModelImpl extends GridWorldModel implements KitchenModel {
     @Override
     public void setView(KitchenView view) {
         this.customView = view;
+    }
+
+    @Override
+    public int getFPS() {
+        return fps;
+    }
+
+    @Override
+    public void setFPS(int fps) {
+        this.fps = fps > 0 ? fps : 1;
     }
 }

@@ -26,7 +26,7 @@ public class KitchenEnv extends Environment {
 
     public static final String ACT_LOCK = "lock";
     public static final String ACT_UNLOCK = "unlock";
-    public static final String ACT_MOVE = "move_towards";
+    public static final String ACT_STEP = "step_towards";
 
     // belief literals
     public static final Literal kso = Literal.parseLiteral("kitchen_status(open)");
@@ -65,11 +65,10 @@ public class KitchenEnv extends Environment {
             percepts.add(Literal.parseLiteral(BEL_WORKSTATION + "(" + ws.getName() + ", " + ws.getX() + ", " + ws.getY() + ")"));
         }
 
-        Integer agId = agentIds.get(agName);
-        if (agId != null) {
-            Location loc = model.getAgPos(agId);
+        for (Map.Entry<String, Integer> entry : agentIds.entrySet()) {
+            Location loc = model.getAgPos(entry.getValue());
             if (loc != null) {
-                percepts.add(Literal.parseLiteral("at(" + agName + ", " + loc.x + ", " + loc.y + ")"));
+                percepts.add(Literal.parseLiteral("at(" + entry.getKey() + ", " + loc.x + ", " + loc.y + ")"));
             }
         }
 
@@ -90,7 +89,10 @@ public class KitchenEnv extends Environment {
 
         // Action: register
         if (functor.equals("register")) {
-            getOrAllocateAgentId(agName);
+            int agId = getOrAllocateAgentId(agName);
+            if (agName.startsWith("station_chef")) {
+                model.addAgent(agId, agName, 0, agId);
+            }
             return true;
         }
 
@@ -124,10 +126,9 @@ public class KitchenEnv extends Environment {
             return false;
         }
 
-        // Action: move_towards(X, Y)
-        if (functor.equals(ACT_MOVE)) {
-            if (!checkPermission(agName, Role.STATION_CHEF, functor))
-                return false;
+        // Action: step_towards(X, Y)
+        if (functor.equals(ACT_STEP)) {
+            if (!checkPermission(agName, Role.STATION_CHEF, functor)) return false;
             try {
                 int x = Integer.parseInt(action.getTerm(0).toString());
                 int y = Integer.parseInt(action.getTerm(1).toString());
@@ -135,10 +136,16 @@ public class KitchenEnv extends Environment {
                 int agId = getOrAllocateAgentId(agName);
 
                 model.moveTowards(agId, x, y);
-                logger.info("[" + agName + "] moving towards coordinates (" + x + ", " + y + ")");
+                logger.info("[" + agName + "] stepping towards coordinates (" + x + ", " + y + ")");
+                
+                try {
+                    Thread.sleep(1000L / model.getFPS());
+                } catch (InterruptedException ignored) {
+                }
+                
                 return true;
             } catch (Exception e) {
-                logger.severe("Invalid coordinates format for move_towards");
+                logger.severe("Invalid coordinates format for step_towards");
                 return false;
             }
         }
