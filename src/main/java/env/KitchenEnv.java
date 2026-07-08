@@ -27,6 +27,8 @@ public class KitchenEnv extends Environment {
     public static final String ACT_LOCK = "lock";
     public static final String ACT_UNLOCK = "unlock";
     public static final String ACT_STEP = "step_towards";
+    public static final String ACT_STEP_OFF = "step_off";
+    public static final String ACT_REGISTER = "register";
 
     // belief literals
     public static final Literal kso = Literal.parseLiteral("kitchen_status(open)");
@@ -88,7 +90,7 @@ public class KitchenEnv extends Environment {
         String functor = action.getFunctor();
 
         // Action: register
-        if (functor.equals("register")) {
+        if (functor.equals(ACT_REGISTER)) {
             int agId = getOrAllocateAgentId(agName);
             if (agName.startsWith("station_chef")) {
                 model.addAgent(agId, agName, 0, agId);
@@ -147,7 +149,7 @@ public class KitchenEnv extends Environment {
         }
         
         // Action: step_off
-        if (functor.equals("step_off")) {
+        if (functor.equals(ACT_STEP_OFF)) {
             if (!checkPermission(agName, Role.STATION_CHEF, functor)) return false;
             int agId = getOrAllocateAgentId(agName);
             boolean steppedOff = model.stepOff(agId);

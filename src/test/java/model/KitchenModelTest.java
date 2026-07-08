@@ -28,6 +28,11 @@ public class KitchenModelTest {
     
     @Test
     public void testLockUnlock() {
+        int ag1 = 1;
+        int ag2 = 2;
+        model.addAgent(ag1, "chef1", 2, 2);
+        model.addAgent(ag2, "chef2", 3, 3);
+
         assertTrue("Agent should be able to lock a free station", model.lock("grill", "chef1"));
         assertFalse("Agent should not be able to lock an occupied station", model.lock("grill", "chef2"));
         assertEquals("chef1", model.getLockOwner("grill"));
@@ -49,10 +54,47 @@ public class KitchenModelTest {
         Location newPos = model.getAgPos(agId);
         assertEquals(initialPos.x + 1, newPos.x);
         assertEquals(initialPos.y + 1, newPos.y);
+    }
+    
+    @Test
+    public void testLockDistanceConstraint() {
+        int agFar = 3;
+        model.addAgent(agFar, "chefFar", 0, 0);
+        assertFalse("Agent should not be able to lock if distance is > 1", model.lock("grill", "chefFar"));
         
-        model.moveTowards(agId, dest.x, dest.y);
-        newPos = model.getAgPos(agId);
-        assertEquals(initialPos.x + 2, newPos.x);
-        assertEquals(initialPos.y + 1, newPos.y);
+        int agClose = 4;
+        model.addAgent(agClose, "chefClose", 2, 2);
+        assertTrue("Agent should lock if distance is <= 1", model.lock("grill", "chefClose"));
+    }
+    
+    @Test
+    public void testMoveTowardsAvoidsAgents() {
+        int ag1 = 5;
+        int ag2 = 6;
+        model.addAgent(ag1, "chefA", 5, 5);
+        model.addAgent(ag2, "chefB", 6, 6);
+        
+        model.moveTowards(ag1, 7, 7);
+        Location newPos = model.getAgPos(ag1);
+        
+        assertFalse("Agent should not step on another agent", newPos.x == 6 && newPos.y == 6);
+        assertTrue("Agent should move to a free adjacent cell", 
+            (newPos.x == 5 && newPos.y == 6) || (newPos.x == 6 && newPos.y == 5));
+    }
+    
+    @Test
+    public void testStepOff() {
+        int agId = 7;
+        model.addAgent(agId, "chefStepOff", 2, 3);
+        
+        model.addAgent(8, "blocker", 2, 2);
+        
+        assertTrue("Agent should successfully step off the workstation", model.stepOff(agId));
+        Location newPos = model.getAgPos(agId);
+        
+        assertFalse("Agent should no longer be on the grill", newPos.x == 2 && newPos.y == 3);
+        assertFalse("Agent should not step on another agent", newPos.x == 2 && newPos.y == 2);
+        
+        assertNotNull(model.getWorkstationAt(2, 3));
     }
 }

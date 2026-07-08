@@ -32,7 +32,7 @@ public class KitchenEnvTest {
 
     @Test
     public void testUpdatePerceptsAddsAgentLocation() {
-        Structure registerAction = (Structure) Literal.parseLiteral("register");
+        Structure registerAction = (Structure) Literal.parseLiteral(KitchenEnv.ACT_REGISTER);
         env.executeAction("station_chef1", registerAction);
         
         Collection<Literal> percepts = env.getPercepts("station_chef1");
@@ -51,20 +51,31 @@ public class KitchenEnvTest {
 
     @Test
     public void testExecuteActionLockAndUnlock() {
+        Structure registerAction1 = (Structure) Literal.parseLiteral(KitchenEnv.ACT_REGISTER);
+        env.executeAction("station_chef1", registerAction1);
+        env.executeAction("station_chef1", (Structure) Literal.parseLiteral(KitchenEnv.ACT_STEP + "(2, 2)"));
+        env.executeAction("station_chef1", (Structure) Literal.parseLiteral(KitchenEnv.ACT_STEP + "(2, 2)"));
+
+        Structure registerAction2 = (Structure) Literal.parseLiteral(KitchenEnv.ACT_REGISTER);
+        env.executeAction("station_chef2", registerAction2);
+        env.executeAction("station_chef2", (Structure) Literal.parseLiteral(KitchenEnv.ACT_STEP + "(3, 3)"));
+        env.executeAction("station_chef2", (Structure) Literal.parseLiteral(KitchenEnv.ACT_STEP + "(3, 3)"));
+        env.executeAction("station_chef2", (Structure) Literal.parseLiteral(KitchenEnv.ACT_STEP + "(3, 3)"));
+
         Structure lockAction = (Structure) Literal.parseLiteral(KitchenEnv.ACT_LOCK + "(grill)");
         Structure unlockAction = (Structure) Literal.parseLiteral(KitchenEnv.ACT_UNLOCK + "(grill)");
         
         assertFalse("Head chef should not be able to lock", env.executeAction("head_chef", lockAction));
-        assertTrue(env.executeAction("station_chef1", lockAction));
-        assertFalse(env.executeAction("station_chef2", lockAction));
-        assertFalse(env.executeAction("station_chef2", unlockAction));
+        assertTrue("station_chef1 should lock", env.executeAction("station_chef1", lockAction));
+        assertFalse("station_chef2 should fail to lock occupied", env.executeAction("station_chef2", lockAction));
+        assertFalse("station_chef2 should fail to unlock others", env.executeAction("station_chef2", unlockAction));
         assertTrue(env.executeAction("station_chef1", unlockAction));
         assertTrue(env.executeAction("station_chef2", lockAction));
     }
 
     @Test
     public void testExecuteActionMoveTowards() {
-        Structure registerAction = (Structure) Literal.parseLiteral("register");
+        Structure registerAction = (Structure) Literal.parseLiteral(KitchenEnv.ACT_REGISTER);
         env.executeAction("station_chef1", registerAction);
         
         Structure moveAction = (Structure) Literal.parseLiteral(KitchenEnv.ACT_STEP + "(1, 1)");
@@ -81,5 +92,16 @@ public class KitchenEnvTest {
         Structure action = (Structure) Literal.parseLiteral("unknown_action");
         boolean result = env.executeAction("station_chef1", action);
         assertFalse("Unknown action should return false (failure)", result);
+    }
+    
+    @Test
+    public void testExecuteActionStepOff() {
+        Structure registerAction = (Structure) Literal.parseLiteral(KitchenEnv.ACT_REGISTER);
+        env.executeAction("station_chef1", registerAction);
+        
+        Structure stepOffAction = (Structure) Literal.parseLiteral(KitchenEnv.ACT_STEP_OFF);
+        
+        assertFalse("Waiter should not be able to step off", env.executeAction("waiter", stepOffAction));
+        assertTrue("Station chef should be able to step off", env.executeAction("station_chef1", stepOffAction));
     }
 }
