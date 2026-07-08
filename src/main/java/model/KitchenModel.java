@@ -61,12 +61,6 @@ public interface KitchenModel {
      */
     boolean unlock(String station, String agName);
 
-    /** Gets the frames per second for agent movement */
-    int getFPS();
-    
-    /** Sets the frames per second for agent movement */
-    void setFPS(int fps);
-
     /**
      * Moves an agent one step towards a target destination.
      *
@@ -76,6 +70,14 @@ public interface KitchenModel {
      * @return true when movement completes
      */
     boolean moveTowards(int agId, int destX, int destY);
+
+    /**
+     * Moves an agent to a free adjacent cell, stepping off a workstation.
+     * 
+     * @param agId the internal model ID of the agent
+     * @return true if successfully stepped off, false if blocked
+     */
+    boolean stepOff(int agId);
 
     /**
      * Retrieves the name of the agent currently holding a workstation's lock.

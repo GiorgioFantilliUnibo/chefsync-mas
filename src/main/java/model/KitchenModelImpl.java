@@ -18,7 +18,6 @@ public class KitchenModelImpl extends GridWorldModel implements KitchenModel {
     private Map<String, Workstation> stations = new HashMap<>();
     private KitchenView customView;
     private Map<Integer, String> agentNames = new ConcurrentHashMap<>();
-    private int fps = 2;
 
     public KitchenModelImpl() {
         super(GSize, GSize, 10);
@@ -67,7 +66,26 @@ public class KitchenModelImpl extends GridWorldModel implements KitchenModel {
     @Override
     public boolean lock(String station, String agName) {
         Workstation ws = stations.get(station);
-        if (ws != null && ws.lock(agName)) {
+        if (ws == null) return false;
+
+        int agId = -1;
+        for (Map.Entry<Integer, String> entry : agentNames.entrySet()) {
+            if (entry.getValue().equals(agName)) {
+                agId = entry.getKey();
+                break;
+            }
+        }
+        if (agId == -1) return false;
+        
+        Location agLoc = getAgPos(agId);
+        if (agLoc == null) return false;
+        
+        // Distance check: must be adjacent or on top
+        if (Math.max(Math.abs(agLoc.x - ws.getX()), Math.abs(agLoc.y - ws.getY())) > 1) {
+            return false;
+        }
+
+        if (ws.lock(agName)) {
             if (customView != null) customView.updateView();
             return true;
         }
@@ -87,19 +105,70 @@ public class KitchenModelImpl extends GridWorldModel implements KitchenModel {
     @Override
     public boolean moveTowards(int agId, int destX, int destY) {
         Location r1 = this.getAgPos(agId);
-        if (r1.x < destX) r1.x++;
-        else if (r1.x > destX) r1.x--;
+        if (r1 == null) return false;
+        if (r1.x == destX && r1.y == destY) return true;
 
-        if (r1.y < destY) r1.y++;
-        else if (r1.y > destY) r1.y--;
+        Location bestNext = null;
+        int minDistance = Integer.MAX_VALUE;
 
-        this.setAgPos(agId, r1);
-        
-        if (customView != null) {
-            customView.updateView();
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dy = -1; dy <= 1; dy++) {
+                if (dx == 0 && dy == 0) continue;
+                
+                int nx = r1.x + dx;
+                int ny = r1.y + dy;
+                
+                if (nx < 0 || nx >= getWidth() || ny < 0 || ny >= getHeight()) continue;
+                
+                if (hasObject(GridWorldModel.AGENT, nx, ny)) continue;
+                
+                Workstation ws = getWorkstationAt(nx, ny);
+                if (ws != null) {
+                    String agName = getAgentName(agId);
+                    if (!agName.equals(ws.getLockOwner())) {
+                        continue;
+                    }
+                }
+                
+                int dist = Math.abs(nx - destX) + Math.abs(ny - destY);
+                if (dist < minDistance) {
+                    minDistance = dist;
+                    bestNext = new Location(nx, ny);
+                }
+            }
+        }
+
+        if (bestNext != null) {
+            this.setAgPos(agId, bestNext);
+            if (customView != null) customView.updateView();
+            return true;
         }
         
-        return true;
+        return false;
+    }
+
+    @Override
+    public boolean stepOff(int agId) {
+        Location curr = getAgPos(agId);
+        if (curr == null) return false;
+        
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dy = -1; dy <= 1; dy++) {
+                if (dx == 0 && dy == 0) continue;
+                int nx = curr.x + dx;
+                int ny = curr.y + dy;
+                
+                if (nx >= 0 && nx < getWidth() && ny >= 0 && ny < getHeight()
+                    && !hasObject(GridWorldModel.AGENT, nx, ny) 
+                    && getWorkstationAt(nx, ny) == null) {
+                    
+                    setAgPos(agId, nx, ny);
+                    if (customView != null) customView.updateView();
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     @Override
@@ -111,15 +180,5 @@ public class KitchenModelImpl extends GridWorldModel implements KitchenModel {
     @Override
     public void setView(KitchenView view) {
         this.customView = view;
-    }
-
-    @Override
-    public int getFPS() {
-        return fps;
-    }
-
-    @Override
-    public void setFPS(int fps) {
-        this.fps = fps > 0 ? fps : 1;
     }
 }

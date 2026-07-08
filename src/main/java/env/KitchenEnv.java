@@ -135,19 +135,28 @@ public class KitchenEnv extends Environment {
 
                 int agId = getOrAllocateAgentId(agName);
 
-                model.moveTowards(agId, x, y);
-                logger.info("[" + agName + "] stepping towards coordinates (" + x + ", " + y + ")");
-                
-                try {
-                    Thread.sleep(1000L / model.getFPS());
-                } catch (InterruptedException ignored) {
+                boolean moved = model.moveTowards(agId, x, y);
+                if (moved) {
+                    logger.info("[" + agName + "] stepping towards coordinates (" + x + ", " + y + ")");
                 }
-                
-                return true;
+                return moved;
             } catch (Exception e) {
                 logger.severe("Invalid coordinates format for step_towards");
                 return false;
             }
+        }
+        
+        // Action: step_off
+        if (functor.equals("step_off")) {
+            if (!checkPermission(agName, Role.STATION_CHEF, functor)) return false;
+            int agId = getOrAllocateAgentId(agName);
+            boolean steppedOff = model.stepOff(agId);
+            if (steppedOff) {
+                logger.info("[" + agName + "] stepped off the workstation.");
+            } else {
+                logger.warning("[" + agName + "] could not step off the workstation (blocked).");
+            }
+            return steppedOff;
         }
 
         logger.info("[" + agName + "] attempted unknown action: " + action);

@@ -2,6 +2,7 @@
 
 workload(0).
 pending_bids(0).
+max_attempts(3).
 
 // Task to workstation mappings
 task_workstation(grill_patty, grill).
@@ -119,14 +120,21 @@ task_workstation(mix_egg_cheese, prep_counter).
 
 +!perform_task(AuctionId, OrderId, Task, Attempts) 
     : task_workstation(Task, Station) & workstation(Station, X, Y) 
-    <-  .print("Moving to ", Station, " at (", X, ", ", Y, ")");
-        !go_to(X, Y);
+    <-  
+        .print("Moving adjacent to ", Station, " at (", X, ", ", Y, ")");
+        !go_to_adjacent(X, Y);
         
         .print("Locking ", Station);
         lock(Station); 
         
+        .print("Stepping onto ", Station);
+        !go_to(X, Y);
+        
         .print("Executing ", Task, " on ", Station, "...");
         .wait(1500);
+        
+        .print("Stepping off ", Station);
+        !step_off;
         
         .print("Unlocking ", Station);
         unlock(Station);
@@ -136,21 +144,53 @@ task_workstation(mix_egg_cheese, prep_counter).
 // --- Fallback & Error Handling ---
 // BDI failure recovery: retries on lock failures before giving up completely
 
--!perform_task(AuctionId, OrderId, Task, Attempts) : Attempts < 3 <-
-    .print("Lock failed for ", Task, " (Order ", OrderId, "). Retrying in 2s... (Attempt ", Attempts + 1, ")");
-    .wait(2000);
+-!perform_task(AuctionId, OrderId, Task, Attempts) : max_attempts(Max) & Attempts < Max <-
+    .print("Action failed for ", Task, " (Order ", OrderId, "). Congestion or locked? Retrying... (Attempt ", Attempts + 1, ")");
+    .wait(1000 + math.random(1000));
     !perform_task(AuctionId, OrderId, Task, Attempts + 1).
 
--!perform_task(AuctionId, OrderId, Task, Attempts) : Attempts >= 3 <-
-    .print("Max lock attempts reached for ", Task, " (Order ", OrderId, "). Aborting.");
+-!perform_task(AuctionId, OrderId, Task, Attempts) : max_attempts(Max) & Attempts >= Max <-
+    .print("Max attempts reached for ", Task, " (Order ", OrderId, "). Aborting task.");
     .send(head_chef, tell, task_failed(OrderId, Task)).
 
 // --- Movement ---
-// Step-by-step recursive movement to prevent teleportation
 
+// Goal achieved: you are adjacent to TargetX, TargetY (distance <= 1) and NOT on it
++!go_to_adjacent(TargetX, TargetY) 
+    : .my_name(Name) & at(Name, MyX, MyY) 
+    & math.abs(MyX - TargetX) <= 1 & math.abs(MyY - TargetY) <= 1 
+    & (MyX \== TargetX | MyY \== TargetY) 
+    <- true.
+
+// Recursive step towards adjacent
++!go_to_adjacent(TargetX, TargetY) <-
+    step_towards(TargetX, TargetY);
+    .wait(300);
+    !go_to_adjacent(TargetX, TargetY).
+
+// Obstacle handling in route
+-!go_to_adjacent(TargetX, TargetY) <-
+    .print("Path blocked! Waiting for traffic to clear...");
+    .wait(300 + math.random(500));
+    !go_to_adjacent(TargetX, TargetY).
+
+// Exact movement to the center of the workstation (allowed if lock owned)
 +!go_to(TargetX, TargetY) : .my_name(Name) & at(Name, TargetX, TargetY) <- 
     true.
 
-+!go_to(TargetX, TargetY) : .my_name(Name) & at(Name, CurrX, CurrY) & (CurrX \== TargetX | CurrY \== TargetY) <-
-    step_towards(TargetX, TargetY); 
++!go_to(TargetX, TargetY) <-
+    step_towards(TargetX, TargetY);
+    .wait(300);
     !go_to(TargetX, TargetY).
+
+-!go_to(TargetX, TargetY) <-
+    .wait(300 + math.random(500));
+    !go_to(TargetX, TargetY).
+
+// Stepping off
++!step_off <-
+    step_off. 
+
+-!step_off <- 
+    .wait(500);
+    !step_off.
