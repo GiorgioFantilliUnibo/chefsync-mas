@@ -104,4 +104,20 @@ public class KitchenEnvTest {
         assertFalse("Waiter should not be able to step off", env.executeAction("waiter", stepOffAction));
         assertTrue("Station chef should be able to step off", env.executeAction("station_chef1", stepOffAction));
     }
+
+    @Test
+    public void testExecuteActionCooking() {
+        Structure registerAction = (Structure) Literal.parseLiteral(KitchenEnv.ACT_REGISTER);
+        env.executeAction("station_chef1", registerAction);
+        
+        env.executeAction("station_chef1", (Structure) Literal.parseLiteral(KitchenEnv.ACT_STEP + "(1, 1)"));
+        env.executeAction("station_chef1", (Structure) Literal.parseLiteral(KitchenEnv.ACT_STEP + "(2, 2)"));
+        env.executeAction("station_chef1", (Structure) Literal.parseLiteral(KitchenEnv.ACT_LOCK + "(grill)"));
+        env.executeAction("station_chef1", (Structure) Literal.parseLiteral(KitchenEnv.ACT_STEP + "(2, 3)"));
+        
+        Structure startCooking = (Structure) Literal.parseLiteral(KitchenEnv.ACT_START_COOKING + "(grill_patty, 10)");
+        
+        assertFalse("Waiter cannot cook", env.executeAction("waiter", startCooking));
+        assertTrue("Station chef can start cooking when at workstation", env.executeAction("station_chef1", startCooking));
+    }
 }

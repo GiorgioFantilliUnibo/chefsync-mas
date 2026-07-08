@@ -61,4 +61,22 @@ public interface Workstation {
      * @param operational true for operational, false for broken.
      */
     void setOperational(boolean operational);
+    
+    /**
+     * Starts cooking a task for a given duration.
+     * @param task the task being cooked.
+     * @param timeMs the time in milliseconds.
+     * @param onComplete callback to run when cooking finishes.
+     */
+    void startCooking(String task, int timeMs, Runnable onComplete);
+    
+    /**
+     * @return the task that is completed, or null if none.
+     */
+    String getCompletedTask();
+    
+    /**
+     * Clears the completed task from the workstation.
+     */
+    void clearCompletedTask();
 }

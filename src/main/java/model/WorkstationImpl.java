@@ -1,6 +1,8 @@
 package model;
 
 import jason.environment.grid.Location;
+import java.util.Timer;
+import java.util.TimerTask;
 
 /**
  * Concrete implementation of the Workstation domain object.
@@ -11,12 +13,17 @@ public class WorkstationImpl implements Workstation {
     private Location location;
     private String lockOwner;
     private boolean isOperational;
+    
+    private String completedTask;
+    private Timer timer;
 
     public WorkstationImpl(String name, int x, int y) {
         this.name = name;
         this.location = new Location(x, y);
         this.lockOwner = null;
         this.isOperational = true;
+        this.completedTask = null;
+        this.timer = new Timer(name + "_timer", true);
     }
 
     @Override
@@ -75,5 +82,31 @@ public class WorkstationImpl implements Workstation {
     @Override
     public void setOperational(boolean operational) {
         this.isOperational = operational;
+    }
+
+    @Override
+    public synchronized void startCooking(String task, int timeMs, Runnable onComplete) {
+        this.completedTask = null;
+        timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                synchronized (WorkstationImpl.this) {
+                    completedTask = task;
+                }
+                if (onComplete != null) {
+                    onComplete.run();
+                }
+            }
+        }, timeMs);
+    }
+
+    @Override
+    public synchronized String getCompletedTask() {
+        return completedTask;
+    }
+
+    @Override
+    public synchronized void clearCompletedTask() {
+        this.completedTask = null;
     }
 }

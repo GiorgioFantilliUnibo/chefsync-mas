@@ -29,6 +29,7 @@ public class KitchenEnv extends Environment {
     public static final String ACT_STEP = "step_towards";
     public static final String ACT_STEP_OFF = "step_off";
     public static final String ACT_REGISTER = "register";
+    public static final String ACT_START_COOKING = "start_cooking";
 
     // belief literals
     public static final Literal kso = Literal.parseLiteral("kitchen_status(open)");
@@ -52,6 +53,7 @@ public class KitchenEnv extends Environment {
         KitchenView view = new KitchenViewImpl(impl);
 
         this.model.setView(view);
+        this.model.setEnvironmentListener(() -> informAgsEnvironmentChanged());
 
         agentIds.clear();
         nextAgId.set(0);
@@ -71,6 +73,13 @@ public class KitchenEnv extends Environment {
             Location loc = model.getAgPos(entry.getValue());
             if (loc != null) {
                 percepts.add(Literal.parseLiteral("at(" + entry.getKey() + ", " + loc.x + ", " + loc.y + ")"));
+                
+                if (entry.getKey().equals(agName)) {
+                    Workstation ws = model.getWorkstationAt(loc.x, loc.y);
+                    if (ws != null && ws.getCompletedTask() != null) {
+                        percepts.add(Literal.parseLiteral("cooked(" + ws.getCompletedTask() + ")"));
+                    }
+                }
             }
         }
 
@@ -159,6 +168,22 @@ public class KitchenEnv extends Environment {
                 logger.warning("[" + agName + "] could not step off the workstation (blocked).");
             }
             return steppedOff;
+        }
+
+        // Action: start_cooking
+        if (functor.equals(ACT_START_COOKING)) {
+            if (!checkPermission(agName, Role.STATION_CHEF, functor)) return false;
+            String task = action.getTerm(0).toString();
+            int time = Integer.parseInt(action.getTerm(1).toString());
+            int agId = getOrAllocateAgentId(agName);
+            
+            boolean started = model.startCooking(agId, task, time);
+            if (started) {
+                logger.info("[" + agName + "] started cooking " + task + " for " + time + "ms.");
+            } else {
+                logger.warning("[" + agName + "] could not start cooking " + task);
+            }
+            return started;
         }
 
         logger.info("[" + agName + "] attempted unknown action: " + action);

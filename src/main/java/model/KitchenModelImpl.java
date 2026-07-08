@@ -18,6 +18,7 @@ public class KitchenModelImpl extends GridWorldModel implements KitchenModel {
     private Map<String, Workstation> stations = new HashMap<>();
     private KitchenView customView;
     private Map<Integer, String> agentNames = new ConcurrentHashMap<>();
+    private Runnable environmentListener;
 
     public KitchenModelImpl() {
         super(GSize, GSize, 10);
@@ -80,7 +81,6 @@ public class KitchenModelImpl extends GridWorldModel implements KitchenModel {
         Location agLoc = getAgPos(agId);
         if (agLoc == null) return false;
         
-        // Distance check: must be adjacent or on top
         if (Math.max(Math.abs(agLoc.x - ws.getX()), Math.abs(agLoc.y - ws.getY())) > 1) {
             return false;
         }
@@ -96,6 +96,7 @@ public class KitchenModelImpl extends GridWorldModel implements KitchenModel {
     public boolean unlock(String station, String agName) {
         Workstation ws = stations.get(station);
         if (ws != null && ws.unlock(agName)) {
+            ws.clearCompletedTask();
             if (customView != null) customView.updateView();
             return true;
         }
@@ -175,6 +176,25 @@ public class KitchenModelImpl extends GridWorldModel implements KitchenModel {
     public String getLockOwner(String station) {
         Workstation ws = stations.get(station);
         return ws != null ? ws.getLockOwner() : null;
+    }
+
+    @Override
+    public boolean startCooking(int agId, String task, int timeMs) {
+        Location loc = getAgPos(agId);
+        if (loc == null) return false;
+        Workstation ws = getWorkstationAt(loc.x, loc.y);
+        if (ws == null) return false;
+        
+        ws.startCooking(task, timeMs, () -> {
+            if (customView != null) customView.updateView();
+            if (environmentListener != null) environmentListener.run();
+        });
+        return true;
+    }
+
+    @Override
+    public void setEnvironmentListener(Runnable listener) {
+        this.environmentListener = listener;
     }
 
     @Override

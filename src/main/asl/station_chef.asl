@@ -4,29 +4,29 @@ workload(0).
 pending_bids(0).
 max_attempts(3).
 
-// Task to workstation mappings
-task_workstation(grill_patty, grill).
-task_workstation(toast_bun, grill).
-task_workstation(assemble_burger, prep_counter).
-task_workstation(heat_piadina, oven).
-task_workstation(add_squacquerone, prep_counter).
-task_workstation(add_prosciutto, prep_counter).
+// Task to workstation mappings with prep time
+task_workstation(grill_patty, grill, 7000).
+task_workstation(toast_bun, grill, 3000).
+task_workstation(assemble_burger, prep_counter, 1500).
+task_workstation(heat_piadina, oven, 200).
+task_workstation(add_squacquerone, prep_counter, 1000).
+task_workstation(add_prosciutto, prep_counter, 1000).
 
-task_workstation(slice_tomatoes, salad_bar).
-task_workstation(slice_mozzarella, salad_bar).
-task_workstation(plate_salad, prep_counter).
+task_workstation(slice_tomatoes, salad_bar, 700).
+task_workstation(slice_mozzarella, salad_bar, 700).
+task_workstation(plate_salad, prep_counter, 1000).
 
-task_workstation(bread_calamari, prep_counter).
-task_workstation(fry_calamari, fryer).
-task_workstation(plate_calamari, prep_counter).
+task_workstation(bread_calamari, prep_counter, 1500).
+task_workstation(fry_calamari, fryer, 3000).
+task_workstation(plate_calamari, prep_counter, 1000).
 
-task_workstation(prepare_coffee, stove).
-task_workstation(layer_mascarpone, dessert_station).
-task_workstation(dust_cocoa, dessert_station).
+task_workstation(prepare_coffee, stove, 2000).
+task_workstation(layer_mascarpone, dessert_station, 1500).
+task_workstation(dust_cocoa, dessert_station, 500).
 
-task_workstation(boil_pasta, stove).
-task_workstation(fry_guanciale, stove).
-task_workstation(mix_egg_cheese, prep_counter).
+task_workstation(boil_pasta, stove, 4000).
+task_workstation(fry_guanciale, stove, 2500).
+task_workstation(mix_egg_cheese, prep_counter, 1500).
 
 
 /* Initial goals */
@@ -50,7 +50,7 @@ task_workstation(mix_egg_cheese, prep_counter).
 
 +cfp(AuctionId, OrderId, Task)[source(head_chef)] : workload(0) <-
     .my_name(Name);
-    ?task_workstation(Task, Station);
+    ?task_workstation(Task, Station, _);
     ?workstation(Station, StatX, StatY);
     
     if (at(OtherAgent, StatX, StatY) & OtherAgent \== Name | claiming(_, Station)[source(OtherAgent)]) {
@@ -74,7 +74,7 @@ task_workstation(mix_egg_cheese, prep_counter).
 // Manages the sequential process of moving to, locking, and using a workstation
 
 +accept_proposal(AuctionId, OrderId, Task)[source(head_chef)] <-
-    ?task_workstation(Task, Station);
+    ?task_workstation(Task, Station, _);
     .broadcast(tell, claiming(OrderId, Station));
     
     .print("Won contract ", AuctionId, " for Order ", OrderId, "! Queuing: ", Task);
@@ -97,7 +97,7 @@ task_workstation(mix_egg_cheese, prep_counter).
     
     !perform_task(AuctionId, OrderId, Task, 0);
     
-    ?task_workstation(Task, Station);
+    ?task_workstation(Task, Station, _);
     .broadcast(untell, claiming(OrderId, Station));
     
     ?workload(CurrentW);
@@ -119,7 +119,7 @@ task_workstation(mix_egg_cheese, prep_counter).
 
 
 +!perform_task(AuctionId, OrderId, Task, Attempts) 
-    : task_workstation(Task, Station) & workstation(Station, X, Y) 
+    : task_workstation(Task, Station, Time) & workstation(Station, X, Y) 
     <-  
         .print("Moving adjacent to ", Station, " at (", X, ", ", Y, ")");
         !go_to_adjacent(X, Y);
@@ -130,8 +130,10 @@ task_workstation(mix_egg_cheese, prep_counter).
         .print("Stepping onto ", Station);
         !go_to(X, Y);
         
-        .print("Executing ", Task, " on ", Station, "...");
-        .wait(1500);
+        .print("Executing ", Task, " on ", Station, " for ", Time, "ms...");
+        start_cooking(Task, Time);
+        
+        .wait(cooked(Task));
         
         .print("Stepping off ", Station);
         !step_off;

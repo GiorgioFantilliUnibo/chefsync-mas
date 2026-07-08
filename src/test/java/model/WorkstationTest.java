@@ -69,4 +69,25 @@ public class WorkstationTest {
         workstation.setOperational(true);
         assertTrue("Workstation should be operational again", workstation.isOperational());
     }
+
+    @Test
+    public void testCookingTimer() throws InterruptedException {
+        assertNull("Completed task should be null initially", workstation.getCompletedTask());
+        
+        final boolean[] callbackRun = {false};
+        
+        workstation.startCooking("burger", 50, () -> {
+            callbackRun[0] = true;
+        });
+        
+        assertNull("Completed task should still be null immediately after start", workstation.getCompletedTask());
+        
+        Thread.sleep(100);
+        
+        assertEquals("Completed task should be set after timer expires", "burger", workstation.getCompletedTask());
+        assertTrue("Callback should have been executed", callbackRun[0]);
+        
+        workstation.clearCompletedTask();
+        assertNull("Completed task should be null after clearing", workstation.getCompletedTask());
+    }
 }

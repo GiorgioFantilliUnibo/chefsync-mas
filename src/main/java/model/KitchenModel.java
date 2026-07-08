@@ -82,10 +82,25 @@ public interface KitchenModel {
     /**
      * Retrieves the name of the agent currently holding a workstation's lock.
      *
-     * @param station the name of the target workstation
-     * @return the name of the agent holding the lock, or null if unlocked
+     * @param station the name of the workstation
+     * @return the agent's name, or null if unlocked
      */
     String getLockOwner(String station);
+
+    /**
+     * Starts cooking a task on the workstation currently used by the agent.
+     * 
+     * @param agId the internal model ID of the agent
+     * @param task the task to cook
+     * @param timeMs the duration in milliseconds
+     * @return true if successful
+     */
+    boolean startCooking(int agId, String task, int timeMs);
+
+    /**
+     * Sets a listener to be notified when the environment state changes asynchronously (e.g. timers).
+     */
+    void setEnvironmentListener(Runnable listener);
 
     /**
      * Gets the current location of the agent inside the grid.

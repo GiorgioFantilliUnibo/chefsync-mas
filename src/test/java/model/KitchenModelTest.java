@@ -97,4 +97,22 @@ public class KitchenModelTest {
         
         assertNotNull(model.getWorkstationAt(2, 3));
     }
+
+    @Test
+    public void testStartCookingAndUnlock() throws InterruptedException {
+        int agId = 9;
+        model.addAgent(agId, "chefCook", 2, 3);
+        model.lock("grill", "chefCook");
+        
+        assertTrue("Agent should be able to start cooking", model.startCooking(agId, "patty", 50));
+        
+        Workstation ws = model.getWorkstationAt(2, 3);
+        assertNull(ws.getCompletedTask());
+        
+        Thread.sleep(100);
+        assertEquals("patty", ws.getCompletedTask());
+        
+        model.unlock("grill", "chefCook");
+        assertNull("Task should be cleared after unlock", ws.getCompletedTask());
+    }
 }
