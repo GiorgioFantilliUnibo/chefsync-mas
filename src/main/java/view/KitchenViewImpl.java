@@ -37,7 +37,20 @@ public class KitchenViewImpl extends GridWorldView implements KitchenView {
         SwingUtilities.invokeLater(() -> {
             ordersTableModel.setRowCount(0);
             for (OrderRecord order : kitchenModel.getOrders()) {
-                ordersTableModel.addRow(new Object[]{order.id(), order.dish(), order.status()});
+                ordersTableModel.addRow(new Object[]{
+                    "Order " + order.id(), order.dish(), order.status()
+                });
+                for (TaskRecord task : order.tasks()) {
+                    String taskStatus;
+                    if (task.completed()) {
+                        taskStatus = "DONE";
+                    } else if (task.assignedTo() != null) {
+                        taskStatus = "-> " + task.assignedTo();
+                    } else {
+                        taskStatus = "WAITING";
+                    }
+                    ordersTableModel.addRow(new Object[]{"", "  " + task.name(), taskStatus});
+                }
             }
             this.repaint();
         });

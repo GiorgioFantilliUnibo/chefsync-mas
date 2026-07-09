@@ -6,7 +6,9 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 import view.KitchenView;
 
 /**
@@ -202,14 +204,39 @@ public class KitchenModelImpl extends GridWorldModel implements KitchenModel {
     }
     
     @Override
-    public void addOrder(int orderId, String dish) {
-        orders.put(orderId, new OrderRecord(orderId, dish, "PENDING"));
+    public void addOrder(int orderId, String dish, List<String> taskNames) {
+        List<TaskRecord> tasks = taskNames.stream()
+                .map(name -> new TaskRecord(name, null, false))
+                .collect(Collectors.toList());
+        orders.put(orderId, new OrderRecord(orderId, dish, "PENDING", tasks));
         if (customView != null) customView.updateView();
     }
 
     @Override
     public void updateOrderStatus(int orderId, String status) {
-        orders.computeIfPresent(orderId, (id, order) -> new OrderRecord(id, order.dish(), status));
+        orders.computeIfPresent(orderId, (id, order) -> new OrderRecord(id, order.dish(), status, order.tasks()));
+        if (customView != null) customView.updateView();
+    }
+
+    @Override
+    public void assignTask(int orderId, String task, String chef) {
+        orders.computeIfPresent(orderId, (id, order) -> {
+            List<TaskRecord> updated = order.tasks().stream()
+                    .map(t -> t.name().equals(task) ? new TaskRecord(t.name(), chef, t.completed()) : t)
+                    .collect(Collectors.toList());
+            return new OrderRecord(id, order.dish(), order.status(), updated);
+        });
+        if (customView != null) customView.updateView();
+    }
+
+    @Override
+    public void completeTask(int orderId, String task) {
+        orders.computeIfPresent(orderId, (id, order) -> {
+            List<TaskRecord> updated = order.tasks().stream()
+                    .map(t -> t.name().equals(task) ? new TaskRecord(t.name(), t.assignedTo(), true) : t)
+                    .collect(Collectors.toList());
+            return new OrderRecord(id, order.dish(), order.status(), updated);
+        });
         if (customView != null) customView.updateView();
     }
     

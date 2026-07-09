@@ -3,6 +3,7 @@ package model;
 import jason.environment.grid.Location;
 import java.util.Collection;
 import view.KitchenView;
+import java.util.List;
 
 /**
  * The spatial model interface of the kitchen grid environment.
@@ -103,20 +104,38 @@ public interface KitchenModel {
     void setEnvironmentListener(Runnable listener);
     
     /**
-     * Adds a new order to the system to be tracked on the dashboard.
+     * Adds a new order to the system with its task breakdown.
      * 
      * @param orderId the order ID
      * @param dish the dish name
+     * @param taskNames the list of atomic task names composing the order
      */
-    void addOrder(int orderId, String dish);
+    void addOrder(int orderId, String dish, List<String> taskNames);
 
     /**
-     * Updates the status of an existing order on the dashboard.
+     * Updates the status of an existing order.
      * 
      * @param orderId the order ID
      * @param status the new status
      */
     void updateOrderStatus(int orderId, String status);
+
+    /**
+     * Marks a task within an order as assigned to a specific chef.
+     * 
+     * @param orderId the order ID
+     * @param task the task name
+     * @param chef the name of the assigned chef
+     */
+    void assignTask(int orderId, String task, String chef);
+
+    /**
+     * Marks a task within an order as completed.
+     * 
+     * @param orderId the order ID
+     * @param task the task name
+     */
+    void completeTask(int orderId, String task);
 
     /**
      * Retrieves all tracked orders.

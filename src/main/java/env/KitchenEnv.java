@@ -4,6 +4,9 @@ import jason.asSyntax.Literal;
 import jason.asSyntax.Structure;
 import jason.environment.Environment;
 import jason.environment.grid.Location;
+import jason.asSyntax.NumberTerm;
+import jason.asSyntax.ListTerm;
+import jason.asSyntax.Term;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -30,6 +33,8 @@ public class KitchenEnv extends Environment {
     public static final String ACT_START_COOKING = "start_cooking";
     public static final String ACT_REGISTER_ORDER = "register_order";
     public static final String ACT_RING_BELL = "ring_bell";
+    public static final String ACT_ASSIGN_TASK = "assign_task";
+    public static final String ACT_COMPLETE_TASK = "complete_task";
 
     // belief literals
     public static final Literal kso = Literal.parseLiteral("kitchen_status(open)");
@@ -92,34 +97,70 @@ public class KitchenEnv extends Environment {
         
         String functor = action.getFunctor();
         
+        // Action: ring_bell(OrderId)
         if (functor.equals(ACT_RING_BELL)) {
             if (!checkPermission(agName, Role.HEAD_CHEF, ACT_RING_BELL)) return false;
             int orderId = -1;
             try {
                 if (action.getArity() > 0) {
-                    orderId = (int) ((jason.asSyntax.NumberTerm) action.getTerm(0)).solve();
+                    orderId = (int) ((NumberTerm) action.getTerm(0)).solve();
                 }
             } catch (Exception e) {}
             
-            if (orderId > 0 && model instanceof KitchenModelImpl) {
-                ((KitchenModelImpl) model).updateOrderStatus(orderId, "COMPLETED");
+            if (orderId > 0) {
+                model.updateOrderStatus(orderId, "COMPLETED");
             }
             logger.info("DING! Pass service completed for Order " + orderId);
             return true;
         }
 
+        // Action: register_order(OrderId, DishName, [TaskNames])
         if (functor.equals(ACT_REGISTER_ORDER)) {
             if (!checkPermission(agName, Role.HEAD_CHEF, ACT_REGISTER_ORDER)) return false;
             try {
-                int orderId = (int) ((jason.asSyntax.NumberTerm) action.getTerm(0)).solve();
+                int orderId = (int) ((NumberTerm) action.getTerm(0)).solve();
                 String dish = action.getTerm(1).toString();
-                if (model instanceof KitchenModelImpl) {
-                    ((KitchenModelImpl) model).addOrder(orderId, dish);
+                List<String> taskNames = new ArrayList<>();
+                if (action.getArity() > 2) {
+                    ListTerm taskList = (ListTerm) action.getTerm(2);
+                    for (Term t : taskList) {
+                        taskNames.add(t.toString());
+                    }
                 }
-                logger.info("Order " + orderId + " (" + dish + ") injected into the dashboard.");
+                model.addOrder(orderId, dish, taskNames);
+                logger.info("Order " + orderId + " (" + dish + ") registered with tasks: " + taskNames);
                 return true;
             } catch (Exception e) {
                 logger.warning("Failed to register order: " + e.getMessage());
+                return false;
+            }
+        }
+
+        // Action: assign_task(OrderId, TaskName, ChefName)
+        if (functor.equals(ACT_ASSIGN_TASK)) {
+            if (!checkPermission(agName, Role.HEAD_CHEF, ACT_ASSIGN_TASK)) return false;
+            try {
+                int orderId = (int) ((NumberTerm) action.getTerm(0)).solve();
+                String task = action.getTerm(1).toString();
+                String chef = action.getTerm(2).toString();
+                model.assignTask(orderId, task, chef);
+                return true;
+            } catch (Exception e) {
+                logger.warning("Failed to assign task: " + e.getMessage());
+                return false;
+            }
+        }
+
+        // Action: complete_task(OrderId, TaskName)
+        if (functor.equals(ACT_COMPLETE_TASK)) {
+            if (!checkPermission(agName, Role.HEAD_CHEF, ACT_COMPLETE_TASK)) return false;
+            try {
+                int orderId = (int) ((NumberTerm) action.getTerm(0)).solve();
+                String task = action.getTerm(1).toString();
+                model.completeTask(orderId, task);
+                return true;
+            } catch (Exception e) {
+                logger.warning("Failed to complete task: " + e.getMessage());
                 return false;
             }
         }
