@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
+import java.util.concurrent.CountDownLatch;
 import model.*;
 import view.*;
 
@@ -42,6 +43,8 @@ public class KitchenEnv extends Environment {
     
     
     private Logger logger = Logger.getLogger("chefsync.mas2j." + KitchenEnv.class.getName());
+
+    public static CountDownLatch testLatch = null;
 
     private KitchenModel model;
 
@@ -111,6 +114,10 @@ public class KitchenEnv extends Environment {
                 model.updateOrderStatus(orderId, "COMPLETED");
             }
             logger.info("DING! Pass service completed for Order " + orderId);
+            
+            if (testLatch != null) {
+                testLatch.countDown();
+            }
             return true;
         }
 

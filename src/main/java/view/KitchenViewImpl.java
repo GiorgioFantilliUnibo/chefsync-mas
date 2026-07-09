@@ -116,14 +116,14 @@ public class KitchenViewImpl extends GridWorldView implements KitchenView {
         JPanel sidePanel = new JPanel();
         sidePanel.setLayout(new BoxLayout(sidePanel, BoxLayout.Y_AXIS));
         sidePanel.setPreferredSize(new Dimension(300, 700));
-        sidePanel.setBorder(BorderFactory.createTitledBorder("Gestione Ordini e Task"));
+        sidePanel.setBorder(BorderFactory.createTitledBorder("Order & Task Management"));
 
-        String[] columnNames = {"ID Ordine", "Piatto", "Stato"};
+        String[] columnNames = {"Order ID", "Dish", "Status"};
         ordersTableModel = new DefaultTableModel(columnNames, 0);
         ordersTable = new JTable(ordersTableModel);
         JScrollPane scrollPane = new JScrollPane(ordersTable);
         
-        sidePanel.add(new JLabel("Storico Ordini:"));
+        sidePanel.add(new JLabel("Order History:"));
         sidePanel.add(scrollPane);
         
         getContentPane().add(sidePanel, BorderLayout.EAST);
