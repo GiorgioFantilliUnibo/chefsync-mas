@@ -5,7 +5,7 @@ pending_bids(0).
 max_attempts(3).
 
 // Task to workstation mappings with prep time
-task_workstation(grill_patty, grill, 7000).
+task_workstation(grill_patty, grill, 5500).
 task_workstation(toast_bun, grill, 3000).
 task_workstation(assemble_burger, prep_counter, 1500).
 task_workstation(heat_piadina, oven, 200).
@@ -48,6 +48,7 @@ task_workstation(mix_egg_cheese, prep_counter, 1500).
 // --- Bidding Phase ---
 // Computes bid based on spatial distance. Can bid on multiple auctions concurrently.
 
+@handle_cfp[atomic]
 +cfp(AuctionId, OrderId, Task)[source(head_chef)]: workload(0) & pending_bids(0) <-
     .my_name(Name);
     ?task_workstation(Task, Station, _);

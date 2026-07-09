@@ -49,11 +49,10 @@ recipe(spaghetti_carbonara, [boil_pasta, fry_guanciale, mix_egg_cheese]).
 
 
 @start_queue[atomic]
-+!process_order_queue : not assigning_order(_) & order_queue(Dish, Table, Tasks) <-
++!process_order_queue : order_queue(Dish, Table, Tasks) <-
     -order_queue(Dish, Table, Tasks);
     !get_next_order_id(OrderId);
-    register_order(OrderId, Dish);
-    +assigning_order(OrderId);
+    register_order(OrderId, Dish, Tasks);
     .length(Tasks, TotalTasks);
     +tasks_to_assign(OrderId, TotalTasks);
     
@@ -91,6 +90,7 @@ recipe(spaghetti_carbonara, [boil_pasta, fry_guanciale, mix_egg_cheese]).
         .min(Offers, offer(BestBid, Winner));
         .print("Awarding task '", Task, "' (Order ", OrderId, ") to ", Winner, " (Bid: ", BestBid, ")");
         .send(Winner, tell, accept_proposal(AuctionId, OrderId, Task));
+        assign_task(OrderId, Task, Winner);
         
         .abolish(propose(_, _, _)[source(Winner)]);
         
@@ -99,16 +99,21 @@ recipe(spaghetti_carbonara, [boil_pasta, fry_guanciale, mix_egg_cheese]).
         
         .abolish(propose(AuctionId, OrderId, _));
         
-        ?tasks_to_assign(OrderId, Rem);
-        -+tasks_to_assign(OrderId, Rem - 1);
-        if (Rem - 1 == 0) {
-            -assigning_order(OrderId);
-            .print("All tasks for Order ", OrderId, " assigned! Unlocking queue for the next order.");
-        }
+        !decrement_tasks_to_assign(OrderId);
     } else {
         .print("No bids received for task ", Task, " (Order ", OrderId, ")! Retrying auction in 1s...");
         .wait(600);
         !!start_asynchronous_auction(OrderId, Task);
+    }.
+
+@update_assignment_count[atomic]
++!decrement_tasks_to_assign(OrderId) <-
+    ?tasks_to_assign(OrderId, Rem);
+    NewRem = Rem - 1;
+    -+tasks_to_assign(OrderId, NewRem);
+    if (NewRem == 0) {
+        .print("All tasks for Order ", OrderId, " assigned! Unlocking queue for the next order.");
+        !!process_order_queue;
     }.
 
 // --- Synchronization Barrier ---
@@ -122,6 +127,7 @@ recipe(spaghetti_carbonara, [boil_pasta, fry_guanciale, mix_egg_cheese]).
     NewRemaining = Remaining - 1;
     +pending_tasks(OrderId, Dish, Table, NewRemaining);
     .print("Chef ", Chef, " completed '", Task, "' for Order ", OrderId, ". Remaining tasks in barrier: ", NewRemaining);
+    complete_task(OrderId, Task);
     
     .abolish(task_completed(OrderId, Task)[source(Chef)]);
     !check_barrier_status(OrderId).
@@ -129,7 +135,7 @@ recipe(spaghetti_carbonara, [boil_pasta, fry_guanciale, mix_egg_cheese]).
 
 +!check_barrier_status(OrderId) : pending_tasks(OrderId, Dish, Table, 0) <-
     .print("SUCCESS: Order ", OrderId, " (", Dish, ") for Table ", Table, " is fully completed!");
-    ring_bell;
+    ring_bell(OrderId);
     .abolish(pending_tasks(OrderId, _, _, _)).
 
 +!check_barrier_status(_).

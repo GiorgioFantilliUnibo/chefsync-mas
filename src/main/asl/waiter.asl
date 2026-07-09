@@ -13,7 +13,7 @@
 +!send_orders <-
     .print("Sending first orders to the kitchen...");
     .send(head_chef, achieve, prepare_order(smash_burger, 1));
-    .wait(7000);
+    .wait(4000);
     .send(head_chef, achieve, prepare_order(romagnola_piadina, 2));
     .send(head_chef, achieve, prepare_order(caprese_salad, 3));
     .wait(10000);
