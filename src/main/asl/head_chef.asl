@@ -41,16 +41,28 @@ recipe(spaghetti_carbonara, [boil_pasta, fry_guanciale, mix_egg_cheese]).
 
 
 +!prepare_order(Dish, Table)[source(waiter)] : recipe(Dish, Tasks) <-
+    +order_queue(Dish, Table, Tasks);
+    !!process_order_queue.
+
++!prepare_order(Dish, Table)[source(waiter)] <-
+    .print("Error! Unknown recipe for dish: ", Dish).
+
+
+@start_queue[atomic]
++!process_order_queue : not assigning_order(_) & order_queue(Dish, Table, Tasks) <-
+    -order_queue(Dish, Table, Tasks);
     !get_next_order_id(OrderId);
+    register_order(OrderId, Dish);
+    +assigning_order(OrderId);
     .length(Tasks, TotalTasks);
+    +tasks_to_assign(OrderId, TotalTasks);
     
     +pending_tasks(OrderId, Dish, Table, TotalTasks);
     .print("Order ", OrderId, " accepted: ", Dish, " (Table ", Table, "). Total sub-tasks: ", TotalTasks);
     
     !dispatch_parallel_auctions(OrderId, Tasks).
 
-+!prepare_order(Dish, Table)[source(waiter)] <-
-    .print("Error! Unknown recipe for dish: ", Dish).
++!process_order_queue.
 
 // --- Auction Orchestration ---
 // Spawns independent intentions for each task to avoid blocking the main thread
@@ -86,6 +98,13 @@ recipe(spaghetti_carbonara, [boil_pasta, fry_guanciale, mix_egg_cheese]).
         .send(Losers, tell, reject_proposal(AuctionId, OrderId, Task));
         
         .abolish(propose(AuctionId, OrderId, _));
+        
+        ?tasks_to_assign(OrderId, Rem);
+        -+tasks_to_assign(OrderId, Rem - 1);
+        if (Rem - 1 == 0) {
+            -assigning_order(OrderId);
+            .print("All tasks for Order ", OrderId, " assigned! Unlocking queue for the next order.");
+        }
     } else {
         .print("No bids received for task ", Task, " (Order ", OrderId, ")! Retrying auction in 1s...");
         .wait(600);
