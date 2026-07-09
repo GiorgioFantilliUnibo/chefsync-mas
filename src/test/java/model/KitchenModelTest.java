@@ -4,6 +4,7 @@ import jason.environment.grid.Location;
 import org.junit.Before;
 import org.junit.Test;
 import static org.junit.Assert.*;
+import java.util.List;
 
 public class KitchenModelTest {
     
@@ -118,26 +119,37 @@ public class KitchenModelTest {
 
     @Test
     public void testOrderTracking() {
-        assertEquals("Orders should be empty initially", 0, model.getOrders().size());
+        assertEquals(0, model.getOrders().size());
         
-        model.addOrder(1, "pizza");
-        model.addOrder(2, "pasta");
+        model.addOrder(1, "pizza", List.of("make_dough", "add_topping", "bake"));
+        model.addOrder(2, "pasta", List.of("boil", "sauce"));
         
-        assertEquals("Should have 2 orders", 2, model.getOrders().size());
+        assertEquals(2, model.getOrders().size());
         
         OrderRecord order1 = model.getOrders().stream().filter(o -> o.id() == 1).findFirst().orElse(null);
         assertNotNull(order1);
         assertEquals("pizza", order1.dish());
         assertEquals("PENDING", order1.status());
+        assertEquals(3, order1.tasks().size());
+        assertNull(order1.tasks().get(0).assignedTo());
+        assertFalse(order1.tasks().get(0).completed());
+        
+        model.assignTask(1, "make_dough", "station_chef1");
+        order1 = model.getOrders().stream().filter(o -> o.id() == 1).findFirst().orElse(null);
+        assertEquals("station_chef1", order1.tasks().get(0).assignedTo());
+        assertFalse(order1.tasks().get(0).completed());
+        assertNull(order1.tasks().get(1).assignedTo());
+        
+        model.completeTask(1, "make_dough");
+        order1 = model.getOrders().stream().filter(o -> o.id() == 1).findFirst().orElse(null);
+        assertTrue(order1.tasks().get(0).completed());
         
         model.updateOrderStatus(1, "COMPLETED");
-        
-        OrderRecord updatedOrder1 = model.getOrders().stream().filter(o -> o.id() == 1).findFirst().orElse(null);
-        assertNotNull(updatedOrder1);
-        assertEquals("COMPLETED", updatedOrder1.status());
+        order1 = model.getOrders().stream().filter(o -> o.id() == 1).findFirst().orElse(null);
+        assertEquals("COMPLETED", order1.status());
         
         OrderRecord order2 = model.getOrders().stream().filter(o -> o.id() == 2).findFirst().orElse(null);
-        assertNotNull(order2);
         assertEquals("PENDING", order2.status());
+        assertEquals(2, order2.tasks().size());
     }
 }

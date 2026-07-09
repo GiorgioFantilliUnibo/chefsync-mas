@@ -51,10 +51,43 @@ public class KitchenEnvTest {
 
     @Test
     public void testExecuteActionRegisterOrder() {
-        Structure action = (Structure) Literal.parseLiteral(KitchenEnv.ACT_REGISTER_ORDER + "(2, smash_burger)");
+        Structure action = (Structure) Literal.parseLiteral(
+            KitchenEnv.ACT_REGISTER_ORDER + "(1, smash_burger, [grill_patty, toast_bun])");
         
-        assertFalse("Action 'register_order' should fail for station_chef", env.executeAction("station_chef1", action));
-        assertTrue("Action 'register_order' should return true for head_chef", env.executeAction("head_chef", action));
+        assertFalse("register_order should fail for station_chef",
+            env.executeAction("station_chef1", action));
+        assertTrue("register_order should succeed for head_chef",
+            env.executeAction("head_chef", action));
+    }
+
+    @Test
+    public void testExecuteActionAssignTask() {
+        env.executeAction("head_chef", (Structure) Literal.parseLiteral(
+            KitchenEnv.ACT_REGISTER_ORDER + "(1, burger, [grill_patty])"));
+        
+        Structure action = (Structure) Literal.parseLiteral(
+            KitchenEnv.ACT_ASSIGN_TASK + "(1, grill_patty, station_chef1)");
+        
+        assertFalse("assign_task should fail for station_chef",
+            env.executeAction("station_chef1", action));
+        assertTrue("assign_task should succeed for head_chef",
+            env.executeAction("head_chef", action));
+    }
+
+    @Test
+    public void testExecuteActionCompleteTask() {
+        env.executeAction("head_chef", (Structure) Literal.parseLiteral(
+            KitchenEnv.ACT_REGISTER_ORDER + "(1, burger, [grill_patty])"));
+        env.executeAction("head_chef", (Structure) Literal.parseLiteral(
+            KitchenEnv.ACT_ASSIGN_TASK + "(1, grill_patty, station_chef1)"));
+        
+        Structure action = (Structure) Literal.parseLiteral(
+            KitchenEnv.ACT_COMPLETE_TASK + "(1, grill_patty)");
+        
+        assertFalse("complete_task should fail for station_chef",
+            env.executeAction("station_chef1", action));
+        assertTrue("complete_task should succeed for head_chef",
+            env.executeAction("head_chef", action));
     }
 
     @Test
