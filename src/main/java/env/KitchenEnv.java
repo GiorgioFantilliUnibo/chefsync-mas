@@ -22,14 +22,14 @@ import view.*;
 public class KitchenEnv extends Environment {
 
     // action literals
-    public static final Literal rb = Literal.parseLiteral("ring_bell");
-
     public static final String ACT_LOCK = "lock";
     public static final String ACT_UNLOCK = "unlock";
     public static final String ACT_STEP = "step_towards";
     public static final String ACT_STEP_OFF = "step_off";
     public static final String ACT_REGISTER = "register";
     public static final String ACT_START_COOKING = "start_cooking";
+    public static final String ACT_REGISTER_ORDER = "register_order";
+    public static final String ACT_RING_BELL = "ring_bell";
 
     // belief literals
     public static final Literal kso = Literal.parseLiteral("kitchen_status(open)");
@@ -89,14 +89,40 @@ public class KitchenEnv extends Environment {
     @Override
     public boolean executeAction(String agName, Structure action) {
         logger.info("[" + agName + "] doing: " + action);
-
-        if (action.equals(KitchenEnv.rb)) {
-            if (!checkPermission(agName, Role.HEAD_CHEF, KitchenEnv.rb.toString()))
-                return false;
-            logger.info("DING! Pass service completed.");
+        
+        String functor = action.getFunctor();
+        
+        if (functor.equals(ACT_RING_BELL)) {
+            if (!checkPermission(agName, Role.HEAD_CHEF, ACT_RING_BELL)) return false;
+            int orderId = -1;
+            try {
+                if (action.getArity() > 0) {
+                    orderId = (int) ((jason.asSyntax.NumberTerm) action.getTerm(0)).solve();
+                }
+            } catch (Exception e) {}
+            
+            if (orderId > 0 && model instanceof KitchenModelImpl) {
+                ((KitchenModelImpl) model).updateOrderStatus(orderId, "COMPLETED");
+            }
+            logger.info("DING! Pass service completed for Order " + orderId);
             return true;
         }
-        String functor = action.getFunctor();
+
+        if (functor.equals(ACT_REGISTER_ORDER)) {
+            if (!checkPermission(agName, Role.HEAD_CHEF, ACT_REGISTER_ORDER)) return false;
+            try {
+                int orderId = (int) ((jason.asSyntax.NumberTerm) action.getTerm(0)).solve();
+                String dish = action.getTerm(1).toString();
+                if (model instanceof KitchenModelImpl) {
+                    ((KitchenModelImpl) model).addOrder(orderId, dish);
+                }
+                logger.info("Order " + orderId + " (" + dish + ") injected into the dashboard.");
+                return true;
+            } catch (Exception e) {
+                logger.warning("Failed to register order: " + e.getMessage());
+                return false;
+            }
+        }
 
         // Action: register
         if (functor.equals(ACT_REGISTER)) {

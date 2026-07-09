@@ -101,6 +101,29 @@ public interface KitchenModel {
      * Sets a listener to be notified when the environment state changes asynchronously (e.g. timers).
      */
     void setEnvironmentListener(Runnable listener);
+    
+    /**
+     * Adds a new order to the system to be tracked on the dashboard.
+     * 
+     * @param orderId the order ID
+     * @param dish the dish name
+     */
+    void addOrder(int orderId, String dish);
+
+    /**
+     * Updates the status of an existing order on the dashboard.
+     * 
+     * @param orderId the order ID
+     * @param status the new status
+     */
+    void updateOrderStatus(int orderId, String status);
+
+    /**
+     * Retrieves all tracked orders.
+     * 
+     * @return a collection of OrderRecord
+     */
+    Collection<OrderRecord> getOrders();
 
     /**
      * Gets the current location of the agent inside the grid.

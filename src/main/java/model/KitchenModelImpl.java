@@ -5,6 +5,7 @@ import jason.environment.grid.Location;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import view.KitchenView;
 
@@ -19,7 +20,10 @@ public class KitchenModelImpl extends GridWorldModel implements KitchenModel {
     private KitchenView customView;
     private Map<Integer, String> agentNames = new ConcurrentHashMap<>();
     private Runnable environmentListener;
+    
+    private Map<Integer, OrderRecord> orders = new ConcurrentHashMap<>();
 
+    
     public KitchenModelImpl() {
         super(GSize, GSize, 10);
         
@@ -195,6 +199,23 @@ public class KitchenModelImpl extends GridWorldModel implements KitchenModel {
     @Override
     public void setEnvironmentListener(Runnable listener) {
         this.environmentListener = listener;
+    }
+    
+    @Override
+    public void addOrder(int orderId, String dish) {
+        orders.put(orderId, new OrderRecord(orderId, dish, "PENDING"));
+        if (customView != null) customView.updateView();
+    }
+
+    @Override
+    public void updateOrderStatus(int orderId, String status) {
+        orders.computeIfPresent(orderId, (id, order) -> new OrderRecord(id, order.dish(), status));
+        if (customView != null) customView.updateView();
+    }
+    
+    @Override
+    public Collection<OrderRecord> getOrders() {
+        return orders.values();
     }
 
     @Override
