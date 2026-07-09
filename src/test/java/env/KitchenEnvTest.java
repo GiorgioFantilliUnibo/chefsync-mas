@@ -43,10 +43,18 @@ public class KitchenEnvTest {
 
     @Test
     public void testExecuteActionRingBell() {
-        Structure action = (Structure) KitchenEnv.rb;
+        Structure action = (Structure) Literal.parseLiteral(KitchenEnv.ACT_RING_BELL + "(1)");
         
         assertFalse("Action 'ring_bell' should fail for station_chef", env.executeAction("station_chef1", action));
         assertTrue("Action 'ring_bell' should return true for head_chef", env.executeAction("head_chef", action));
+    }
+
+    @Test
+    public void testExecuteActionRegisterOrder() {
+        Structure action = (Structure) Literal.parseLiteral(KitchenEnv.ACT_REGISTER_ORDER + "(2, smash_burger)");
+        
+        assertFalse("Action 'register_order' should fail for station_chef", env.executeAction("station_chef1", action));
+        assertTrue("Action 'register_order' should return true for head_chef", env.executeAction("head_chef", action));
     }
 
     @Test

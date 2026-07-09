@@ -115,4 +115,29 @@ public class KitchenModelTest {
         model.unlock("grill", "chefCook");
         assertNull("Task should be cleared after unlock", ws.getCompletedTask());
     }
+
+    @Test
+    public void testOrderTracking() {
+        assertEquals("Orders should be empty initially", 0, model.getOrders().size());
+        
+        model.addOrder(1, "pizza");
+        model.addOrder(2, "pasta");
+        
+        assertEquals("Should have 2 orders", 2, model.getOrders().size());
+        
+        OrderRecord order1 = model.getOrders().stream().filter(o -> o.id() == 1).findFirst().orElse(null);
+        assertNotNull(order1);
+        assertEquals("pizza", order1.dish());
+        assertEquals("PENDING", order1.status());
+        
+        model.updateOrderStatus(1, "COMPLETED");
+        
+        OrderRecord updatedOrder1 = model.getOrders().stream().filter(o -> o.id() == 1).findFirst().orElse(null);
+        assertNotNull(updatedOrder1);
+        assertEquals("COMPLETED", updatedOrder1.status());
+        
+        OrderRecord order2 = model.getOrders().stream().filter(o -> o.id() == 2).findFirst().orElse(null);
+        assertNotNull(order2);
+        assertEquals("PENDING", order2.status());
+    }
 }
