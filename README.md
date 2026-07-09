@@ -1,34 +1,65 @@
-# ChefSync
+# ChefSync - Multi-Agent Kitchen Orchestrator
 
-**ChefSync** is a simulated, grid-based orchestrator for culinary environments, focusing on distributed task delegation, spatial coordination, and dynamic workload balancing among autonomous entities. 
+**ChefSync** is a simulated, grid-based orchestrator for culinary environments, developed as a project for the **Intelligent Systems Engineering** course (University of Bologna).
 
-Developed for the Intelligent Systems Engineering course (University of Bologna - Cesena), the project models a highly concurrent restaurant kitchen where a stream of unpredictable orders must be fulfilled by a coordinated brigade of agents.
+It focuses on distributed task delegation, spatial coordination, and dynamic workload balancing among autonomous entities. The project models a highly concurrent restaurant kitchen where unpredictable orders are fulfilled by a coordinated brigade of BDI agents.
+
+## Technologies
+
+* **Jason / AgentSpeak(L)** for BDI agent models and reasoning.
+* **Java 21** for the discrete-time spatial simulator and physical grid constraints.
+* **FIPA ContractNet Protocol (CNP)** for distributed task orchestration.
+* **Gradle** for build automation.
+* **JUnit 4** for End-to-End integration testing.
+
+---
+
+## Quick Start
+
+### Requirements
+* **Java 21** installed on your machine.
+* *No local Gradle installation is required (the repository includes the Gradle Wrapper).*
+
+### Clone and Run
+1. Clone the repository:
+   ```bash
+   git clone [https://github.com/TuoUsername/chefsync.git](https://github.com/TuoUsername/chefsync.git)
+   cd chefsync
+   ```
+
+2. Start the Multi-Agent System (this will open the Jason MAS Console and the Grid GUI):
+   ```bash
+   # On Linux / macOS
+   ./gradlew runChefsyncMas
+
+   # On Windows
+   .\gradlew.bat runChefsyncMas
+   ```
+
+---
 
 ## System Architecture
 
-The project enforces a strict architectural split between the physical simulation (Java) and the distributed intelligence/reasoning layer (Jason/AgentSpeak).
+The intelligence of the system is distributed across three distinct roles communicating via FIPA ACL:
 
-### 1. The Environment (Java)
-* **Discrete-time Spatial Simulator:** Manages the physical 2D grid, coordinates hardware locks (mutual exclusion for shared equipment like Ovens or Grills), and handles simulation ticks.
-* **Visual Monitor & Logger:** Built-in grid views to observe spatial coordination and agent movements in real-time, coupled with console tracing for FIPA ACL negotiations.
+* **Waiter Agent (`waiter.asl`)**: Acts as the environmental stimulus. Asynchronously generates and injects complex, multi-item orders into the kitchen.
+* **Head Chef Agent (`head_chef.asl`)**: The central planner. Evaluates incoming orders against its internal recipe knowledge base, decomposes them into atomic sub-tasks, and initiates a **ContractNet Protocol (CNP)** to assign tasks based on the brigade's current workload and distance.
+* **Station Chef Agents (`station_chef.asl`)**: Autonomous BDI workers. They evaluate CFPs based on their spatial distance to the required workstation, handle A* grid pathfinding, acquire physical resource locks, execute cooking tasks, and manage failure-recovery plans.
 
-### 2. The Mind (Jason/AgentSpeak)
-* **Logical Knowledge Base:** Culinary dependencies (e.g., preparing a smash burger requires grilling the patty, toasting the bun, and assembling) are internalized as BDI beliefs and rules, rather than external Java data structures.
-* **Distributed Orchestration:** Agents communicate strictly via **FIPA ACL** messages to negotiate tasks and update statuses.
+---
 
+## Testing
 
+The repository includes an End-to-End (E2E) integration test that runs a headless execution of the MAS to verify the full lifecycle (boot -> order injection -> CNP negotiation -> cooking -> completion).
 
-## Agent Roles
+To run the automated tests:
+```bash
+./gradlew test
+```
 
-The system intelligence is distributed across three distinct BDI roles:
+---
 
-* **Waiter Agent (Order Ingestion):** Acts as the environmental stimulus. Asynchronously generates and injects complex, multi-item orders into the system, simulating real-world unpredictable demand.
-* **Head Chef Agent (Task Orchestration):** Functions as the central planner. Evaluates incoming orders against its internal knowledge base, decomposes them into atomic sub-tasks, and initiates a **ContractNet Protocol (CNP)**. It acts as the *Initiator*, assigning tasks based on the brigade's current load and the received proposals.
-* **Station Chef Agents (Execution & Spatial Reasoning):** Autonomous BDI workers acting as CNP *Participants*. They evaluate CFPs based on their availability and spatial distance to the required workstation. Once a task is assigned, they handle pathfinding in the Java grid, acquire physical resources, execute the cooking task, and employ failure-recovery plans (e.g., dynamically dropping an intention and notifying the Head Chef if a workstation breaks or is blocked).
-
-
-
-## Repository Structure
+## Project Structure
 
 ```text
 chefsync/
@@ -45,3 +76,4 @@ chefsync/
 │   │       └── view/             # Java Swing Visual Monitor
 │   └── test/
 │       └── java/                 # JUnit Integration and Unit Tests
+```
