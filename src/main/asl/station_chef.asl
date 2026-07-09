@@ -48,7 +48,7 @@ task_workstation(mix_egg_cheese, prep_counter, 1500).
 // --- Bidding Phase ---
 // Computes bid based on spatial distance. Can bid on multiple auctions concurrently.
 
-+cfp(AuctionId, OrderId, Task)[source(head_chef)] : workload(0) <-
++cfp(AuctionId, OrderId, Task)[source(head_chef)]: workload(0) & pending_bids(0) <-
     .my_name(Name);
     ?task_workstation(Task, Station, _);
     ?workstation(Station, StatX, StatY);
@@ -80,6 +80,7 @@ task_workstation(mix_egg_cheese, prep_counter, 1500).
     .print("Won contract ", AuctionId, " for Order ", OrderId, "! Queuing: ", Task);
     ?workload(W);
     -+workload(W + 1);
+    -+pending_bids(0);
     
     +queued_task(AuctionId, OrderId, Task);
     !!process_queue.
