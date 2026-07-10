@@ -33,3 +33,43 @@ The **Station Chef Agents** represent the autonomous workforce. They evaluate ta
 * **Spatial Navigation:** Once awarded a task (`accept_proposal`), the agent executes a plan to reach the workstation coordinates $(X,Y)$. It issues sequential `step_towards` actions in the environment, which uses a localized greedy heuristic to step closer while avoiding collision with other agents.
 * **Proximity Locking:** Upon reaching the destination, the agent must be adjacent to the workstation to execute the `lock(Station)` action. Once locked, it steps onto the station, executes `start_cooking(Task, Time)`, waits for the environment percept `cooked(Task)`, steps off, and unlocks the workstation.
 * **BDI Fallback & Recovery:** If movement or lock acquisition fails (due to congestion, lock contention, or equipment breakdown), the BDI engine triggers a plan failure handler: `-!perform_task(AuctionId, OrderId, Task, Attempts)`. The agent increments its attempt counter and retries after a random delay. If the attempts exceed `max_attempts`, it aborts and notifies the Head Chef by sending a `task_failed(OrderId, Task)` message, triggering a re-auction of the task.
+
+## 4.2 FIPA ContractNet Protocol (CNP) Implementation
+
+The distribution of cooking tasks in ChefSync is dynamically negotiated using a FIPA-compliant ContractNet Protocol (CNP). This ensures that task allocation is not hardcoded, but emerges at runtime based on the state of the system.
+
+### 4.2.1 The Negotiation Process
+
+The protocol is divided into distinct phases involving the Head Chef (as the **Initiator**) and the Station Chefs (as the **Participants**):
+
+1. **Call for Proposal (CFP):**
+   The Head Chef launches an asynchronous intention (`!start_asynchronous_auction`) for a specific task. It queries the Directory Facilitator to find the active Station Chefs and sends a multicast `cfp(AuctionId, OrderId, Task)` message. The Head Chef then waits for a deterministic timeout (e.g., 1.5 seconds) to allow participants to reply.
+   
+2. **Propose or Refuse:**
+   Station Chefs receive the CFP and evaluate it. Based on their local state, they reply either with a `propose(Bid)` containing a heuristic cost score, or a `refuse` message.
+   
+3. **Evaluation & Award:**
+   Once the timeout expires, the Head Chef collects all proposals using `.findall`.
+   * **Success Case:** If proposals are received, the Head Chef selects the optimal proposal using `.min`. It sends `accept_proposal` to the winner, updates the physical dashboard via `assign_task`, and sends `reject_proposal` to the remaining bidders.
+   * **Failure/Retry Case:** If no proposals are received (e.g., all chefs are busy or workstations are contested), the Head Chef waits for a short period and spawns a retry auction.
+
+### 4.2.2 Utility & Heuristic Evaluation Function
+
+To decide whether to bid and how to calculate the cost, the Station Chefs evaluate the incoming CFP against their local cognitive and physical context:
+
+#### 1. Cognitive Concurrency Gate
+Before calculating a bid, the Station Chef validates its capacity. To prevent resource over-commitment, an agent will only bid if it is completely free:
+$$\text{workload} == 0 \quad \land \quad \text{pending\_bids} == 0$$
+If the chef is currently cooking a task ($\text{workload} > 0$) or waiting for the outcome of another auction ($\text{pending\_bids} > 0$), it replies with a `refuse`.
+
+#### 2. Physical Contention Gate
+The agent checks if the workstation required for the task is already occupied by another agent or has been claimed by a peer at the cognitive level:
+$$\text{Occupied}(Station) \quad \lor \quad \text{Claimed}(Station)$$
+If the workstation is unavailable, the chef refuses to prevent spatial conflicts and lock contention.
+
+#### 3. Heuristic Utility Score
+If both gates are passed, the chef computes a cost score based on spatial distance. Since moving through the grid takes time and steps, the utility of a task is inversely proportional to the distance:
+$$\text{Manhattan\_Distance} = |X_{\text{chef}} - X_{\text{station}}| + |Y_{\text{chef}} - Y_{\text{station}}|$$
+The calculated $\text{Bid}$ represents the Manhattan distance (total grid step actions required to reach the destination). The Head Chef's minimization function ($\text{min}$) naturally awards the task to the closest available chef, minimizing movement latency and maximizing kitchen throughput.
+
+To guarantee encapsulation and high software modularity, the calculation is delegated to a **custom Java Internal Action** (`utils.calculate_distance`). By decoupling this heuristic from the AgentSpeak plan logic, the distance calculation remains easily customizable for the future.
