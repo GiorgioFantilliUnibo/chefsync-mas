@@ -59,7 +59,7 @@ task_workstation(mix_egg_cheese, prep_counter, 1500).
         .send(head_chef, tell, refuse(AuctionId, OrderId));
     } else {
         ?at(Name, MyX, MyY);
-        Distance = math.abs(MyX - StatX) + math.abs(MyY - StatY);
+        utils.calculate_distance(MyX, MyY, StatX, StatY, Distance);
         Bid = Distance;
         
         -+pending_bids(1);
