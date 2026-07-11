@@ -44,18 +44,22 @@ The test verifies the full, unbroken chain of events:
 3. **Physical Action Integration:** Verifies that chefs successfully navigate the grid, lock the workstations, cook, and notify completion.
 4. **Safety & Liveness:** Confirms the order completes within the 45-second safety timeout, asserting that the system is free of deadlocks and logical stalls.
 
-## 6.3 Visual and Console Validation
+## 6.3 Continuous Integration (GitHub Actions)
+
+To ensure that modifications to the agents or the environment code do not break existing functionality or introduce new bugs, the repository integrates a Continuous Integration (CI) pipeline using **GitHub Actions**. On every `push` or `pull_request` to the `main` and `develop` branches, a workflow compiles the code under JDK 21 and runs the complete test suite. Because the physical environment utilizes Swing GUI components, the workflow wraps the test execution command with `xvfb-run` to virtualize the display environment and allow headless UI-bound test execution in the CI runner.
+
+## 6.4 Visual and Console Validation
 
 While automated tests ensure structural correctness, manual and visual validation remains essential for analyzing the complex social dynamics and spatial heuristics of the agents.
 
-### 6.3.1 Social & Log Traceability
+### 6.4.1 Social & Log Traceability
 
 To monitor the cognitive coordination and internal states of the agents, the system provides two distinct debugging interfaces:
 
 * **Jason MAS Console (GUI):** A Swing-based console window automatically spawned by the Jason framework at startup. It aggregates the stdout logs, logging outputs, and `.print` instructions from all active agents into a single centralized view. It also provides basic controls (such as pause, resume, and stop) to inspect the execution flow step-by-step.
 * **Agent Mind Inspector (Web Interface):** Jason hosts a local web server (typically at port `3272`) running the Mind Inspector. This web interface allows evaluators to inspect the internal BDI state of any agent dynamically. It shows their active belief base (e.g., current position, held locks, claims), active desires (goals), and the exact execution stack of their current intentions.
 
-### 6.3.2 Spatial Validation (The Swing GUI)
+### 6.4.2 Spatial Validation (The Swing GUI)
 Simultaneously, the Swing GUI provides a passive window into the physical consequences of those cognitive decisions. It allows the user to visually validate:
 * **Spatial Coordination:** Observing the Station Chefs physically moving step-by-step across the grid, confirming that they avoid static obstacles and dynamically choose the shortest path using the model's greedy Manhattan distance minimization heuristic.
 * **Concurrency Safety:** Observing the color-coded workstation locks (green/red), ensuring that no two agents ever occupy or cook at the same critical hardware resource simultaneously.
