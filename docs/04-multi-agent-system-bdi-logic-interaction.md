@@ -1,6 +1,6 @@
 ---
 layout: default
-title: Multi-Agent System (BDI Logic)
+title: Multi-Agent System
 nav_order: 5
 ---
 
