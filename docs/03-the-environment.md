@@ -12,7 +12,7 @@ This section details the concrete mechanics of the physical layer, including its
 
 ## 3.1 Spatial and Temporal Model
 
-The physical boundaries of the kitchen are modeled as a discrete **2D Spatial Grid** consisting of distinct coordinates $(x, y)$. Every operational entity within the system—including autonomous agents, prep counters, and specialized workstations—is assigned a specific spatial locus within this coordinate system.
+The physical boundaries of the kitchen are modeled as a discrete **2D Spatial Grid** consisting of distinct coordinates (x, y). Every operational entity within the system—including autonomous agents, prep counters, and specialized workstations—is assigned a specific spatial locus within this coordinate system.
 
 ### 3.1.1 Spatial Constraints and Navigation
 The grid imposes strict physical laws on the system:
@@ -20,7 +20,7 @@ The grid imposes strict physical laws on the system:
 * **Movement Cost:** Pathfinding and movement require physical effort over time. For an agent to move, it must execute sequential `step_towards` actions, shifting its coordinates one cell at a time. These movements are paired with logical pauses (e.g., `.wait` directives in the plans), introducing realistic temporal delays to the execution.
 
 ### 3.1.2 Asynchronous, Event-Driven Execution
-Unlike step-locked or tick-based simulation engines, ChefSync features a real-time, asynchronous, event-driven temporal model:
+ChefSync features a real-time, asynchronous, event-driven temporal model:
 * **Real-Time Timers:** Physical processes (such as cooking a task on a workstation) are mapped to continuous real-world time. When an agent invokes `start_cooking(Task, Time)`, the physical layer starts an asynchronous Java `TimerTask` that runs for the specified duration in milliseconds.
 * **Event-Driven Perceptions:** Upon timer expiration, the workstation state is mutated to register the completed task. The model then triggers a callback to the environment interface, invoking `informAgsEnvironmentChanged()`. This notifies the Jason framework to perform a new reasoning cycle and update the agent's percepts (e.g., adding the `cooked(Task)` belief), coupling the physical and logical layers asynchronously.
 
@@ -31,7 +31,7 @@ One of the core challenges addressed by the physical layer is the management of 
 Because multiple Station Chef agents operate concurrently within the same physical space, unmanaged access to these workstations would inevitably cause state corruption or overlapping task execution. To prevent this, the physical layer implements strict **Mutual Exclusion (Mutex)** principles:
 
 1. **Hardware-Level Locking:** Each workstation encapsulates a lock state (Unlocked vs. Locked by a specific agent) backed by thread-safe synchronization within the `Workstation` model.
-2. **Proximity-Constrained Locking Actions:** An agent must be adjacent to a workstation (distance $\le 1$ cell) to execute the `lock(Station)` action. Once the lock is successfully acquired, the agent is allowed to step onto the workstation cell to initiate cooking. If a Station Chef attempts to lock an already occupied resource, the environment rejects the action (returning `false` to the interpreter), which triggers the agent's BDI retry plan.
+2. **Proximity-Constrained Locking Actions:** An agent must be adjacent to a workstation (distance less than or equal to 1 cell) to execute the `lock(Station)` action. Once the lock is successfully acquired, the agent is allowed to step onto the workstation cell to initiate cooking. If a Station Chef attempts to lock an already occupied resource, the environment rejects the action (returning `false` to the interpreter), which triggers the agent's BDI retry plan.
 3. **Decoupled Error Handling:** Enforcing resource constraints at the environment model level rather than trusting agent behavior ensures safety. If an agent's social coordination fails (e.g., overlapping attempts), the physical model blocks illegal access, forcing the BDI reasoner to handle execution failures.
 
 ## 3.3 The Perception-Action Interface (`KitchenEnv`)
@@ -70,6 +70,6 @@ To verify the correct execution of the Multi-Agent System and ensure full transp
 
 Following a strict separation of presentation and logic, the visual monitor operates as a pure observer of the underlying `KitchenModel`. It renders:
 * **The 2D Grid Visualizer:** Displays real-time agent movements and workstation highlights (color-coded green for unlocked and red for locked, along with lock ownership labels).
-* **The Order & Task Management Dashboard:** A side panel featuring a JTable that displays the order history and real-time task completion breakdown (showing task names, assignments, and completion states).
+* **The Order & Task Management Dashboard:** A side panel featuring a table that displays the order history and real-time task completion breakdown (showing task names, assignments, and completion states).
 
 Because the view contains zero business logic and does not influence scheduling, it provides a clear window into the simulation without introducing side effects or affecting the timing of the BDI logic.
