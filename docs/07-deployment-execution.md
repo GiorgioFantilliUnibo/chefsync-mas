@@ -13,7 +13,8 @@ This chapter provides step-by-step, reproducible instructions to build, execute,
 To run the simulation and compile the codebase, the host environment must satisfy the following minimal requirements:
 
 * **Java Development Kit (JDK):** Version **21** or higher must be installed and properly configured in the system's path.
-* *Note: No local installation of Gradle is required, as the project includes the Gradle Wrapper (`gradlew` / `gradlew.bat`).*
+
+*Note: No local installation of Gradle is required, as the project includes the Gradle Wrapper (`gradlew` / `gradlew.bat`).*
 
 ## 7.2 Clone the Repository
 

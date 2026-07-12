@@ -65,7 +65,7 @@ The project relies on a modern, standard toolchain designed to guarantee cross-p
 
 ## 5.3 Repository Structure
 
-To enforce the Separation of Concerns (SoC) discussed in Chapter 2, the source code strictly separates the cognitive "Mind" from the physical "Body" using a footprint directory layout:
+To enforce the Separation of Concerns (SoC), the source code strictly separates the cognitive "Mind" from the physical "Body" using a footprint directory layout:
 
 * **`src/main/asl/` (The Mind):** This directory encapsulates the cognitive layer. It contains all the AgentSpeak source files (`.asl`) that define the beliefs, plans, and reasoning cycles of the agents (`waiter.asl`, `head_chef.asl`, `station_chef.asl`).
 * **`src/main/java/` (The Body):** This directory encapsulates the physical and infrastructural layers. It is further modularized following a Model-View-Controller (MVC) inspired pattern:

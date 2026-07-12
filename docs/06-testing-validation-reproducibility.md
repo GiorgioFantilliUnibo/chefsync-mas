@@ -57,10 +57,10 @@ While automated tests ensure structural correctness, manual and visual validatio
 To monitor the cognitive coordination and internal states of the agents, the system provides two distinct debugging interfaces:
 
 * **Jason MAS Console (GUI):** A Swing-based console window automatically spawned by the Jason framework at startup. It aggregates the stdout logs, logging outputs, and `.print` instructions from all active agents into a single centralized view. It also provides basic controls (such as pause, resume, and stop) to inspect the execution flow step-by-step.
-* **Agent Mind Inspector (Web Interface):** Jason hosts a local web server (typically at port `3272`) running the Mind Inspector. This web interface allows evaluators to inspect the internal BDI state of any agent dynamically. It shows their active belief base (e.g., current position, held locks, claims), active desires (goals), and the exact execution stack of their current intentions.
+* **Agent Mind Inspector (Web Interface):** Jason hosts a local web server running the Mind Inspector. This web interface allows evaluators to inspect the internal BDI state of any agent dynamically. It shows their active belief base (e.g., current position, held locks, claims), active desires (goals), and the exact execution stack of their current intentions.
 
 ### 6.4.2 Spatial Validation (The Swing GUI)
 Simultaneously, the Swing GUI provides a passive window into the physical consequences of those cognitive decisions. It allows the user to visually validate:
 * **Spatial Coordination:** Observing the Station Chefs physically moving step-by-step across the grid, confirming that they avoid static obstacles and dynamically choose the shortest path using the model's greedy Manhattan distance minimization heuristic.
 * **Concurrency Safety:** Observing the color-coded workstation locks (green/red), ensuring that no two agents ever occupy or cook at the same critical hardware resource simultaneously.
-* **Order Tracking Panel:** Monitoring the real-time JTable, validating that order states and task assignment progress update immediately in response to execution events.
+* **Order Tracking Panel:** Monitoring the real-time table, validating that order states and task assignment progress update immediately in response to execution events.
