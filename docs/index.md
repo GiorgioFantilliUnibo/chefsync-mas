@@ -6,7 +6,7 @@ nav_order: 1
 
 # ChefSync: A Multi-Agent Kitchen Orchestrator
 
-**Author:** Giorgio Fantilli  
+**Author:** Giorgio Fantilli (giorgio.fantilli@studio.unibo.it)  
 **Course:** Intelligent Systems Engineering  
 **Institution:** Alma Mater Studiorum – Università di Bologna (Cesena Campus)  
 **Academic Year:** 2025/2026  
@@ -15,6 +15,12 @@ nav_order: 1
 ## Abstract
 
 ChefSync is a simulated, grid-based orchestrator designed to manage highly concurrent culinary environments through decentralized multi-agent coordination. The project addresses the complex challenges of modern restaurant kitchens, specifically focusing on dynamic workload balancing, spatial pathfinding, and the resolution of physical resource conflicts. To achieve this, the system enforces a strict architectural dichotomy. The physical layer, implemented in Java, provides a discrete-time 2D spatial simulator that manages environmental state, hardware constraints (workstations), and mutually exclusive resource locks. The logical layer encapsulates the system's intelligence utilizing BDI (Belief-Desire-Intention) agents programmed in Jason and AgentSpeak(L). These autonomous agents—acting as Waiters, Head Chefs, and Station Chefs—communicate via the FIPA Agent Communication Language (ACL). By leveraging the ContractNet Protocol (CNP) for task negotiation, the agents evaluate real-time spatial heuristics and operational availability to effectively orchestrate the decomposition, assignment, and execution of unpredictable order streams.
+
+### GenAI Usage Declaration
+During the development of this project and the writing of this report, Generative AI
+tools were used to assist in tasks such as code formatting, generation of documenta-
+tion templates, and structural review. All core logic, system architecture, and domain
+modeling are original work.
 
 
 ## Table of Contents

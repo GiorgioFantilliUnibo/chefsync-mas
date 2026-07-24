@@ -52,5 +52,5 @@ The following diagram illustrates this multi-agent interaction and environmental
 <p align="center">
   <img src="assets/sequence-diagram_order-lifecycle.png" alt="Sequence Diagram of the Order Lifecycle" width="95%">
   <br>
-  <em>Figure 2.1: Sequence Diagram of the Order and Task Lifecycle</em>
+  <em>Figure 1: Sequence Diagram of the Order and Task Lifecycle</em>
 </p>
